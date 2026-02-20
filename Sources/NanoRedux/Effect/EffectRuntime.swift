@@ -26,7 +26,8 @@ final class EffectRuntime<Action: Sendable> {
 
         if case let .replaceable(key) = effect.lifetime,
            let oldID = replaceIndex[key],
-           let old = managedTasks.removeValue(forKey: oldID) {
+           let old = managedTasks.removeValue(forKey: oldID)
+        {
             old.task.cancel()
             replaceIndex[key] = nil
         }
