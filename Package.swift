@@ -29,5 +29,6 @@ let package = Package(
             name: "NanoReduxTests",
             dependencies: ["NanoRedux"]
         )
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )

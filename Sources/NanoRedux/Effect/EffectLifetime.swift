@@ -19,13 +19,13 @@ public extension EffectLifetime {
         public let namespace: ObjectIdentifier?
         public let key: AnyHashable
 
-        public init<Key: Hashable>(_ key: Key, namespace: ObjectIdentifier? = nil) {
+        public init(_ key: some Hashable, namespace: ObjectIdentifier? = nil) {
             self.namespace = namespace
             self.key = AnyHashable(key)
         }
     }
 
-    static func replaceable<Key: Hashable>(_ key: Key) -> Self {
+    static func replaceable(_ key: some Hashable) -> Self {
         .replaceable(key: .init(key))
     }
 }

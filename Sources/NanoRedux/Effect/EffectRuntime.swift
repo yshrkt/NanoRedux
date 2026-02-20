@@ -20,7 +20,7 @@ final class EffectRuntime<Action: Sendable> {
 
     func run(
         _ effect: Effect<Action>,
-        emit: @escaping @MainActor (Action) -> Void
+        emit: @escaping @MainActor (Action) -> Void,
     ) {
         let id = UUID()
 
@@ -48,14 +48,14 @@ final class EffectRuntime<Action: Sendable> {
             managedTasks[id] = EffectTask(
                 id: id,
                 lifetime: effect.lifetime,
-                task: task
+                task: task,
             )
             replaceIndex[key] = id
         case .storeBound:
             managedTasks[id] = EffectTask(
                 id: id,
                 lifetime: effect.lifetime,
-                task: task
+                task: task,
             )
         case .detached:
             break

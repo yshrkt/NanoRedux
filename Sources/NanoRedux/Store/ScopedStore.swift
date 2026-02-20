@@ -14,13 +14,13 @@ final class ScopedStore<Parent: Storing, LocalState: Observable, LocalAction: Se
     private let toParentAction: (LocalAction) -> Parent.Action
 
     var state: LocalState {
-        return toLocalState(parent.state)
+        toLocalState(parent.state)
     }
 
     init(
         parent: Parent,
         toLocalState: @escaping (Parent.State) -> LocalState,
-        toParentAction: @escaping (LocalAction) -> Parent.Action
+        toParentAction: @escaping (LocalAction) -> Parent.Action,
     ) {
         self.parent = parent
         self.toLocalState = toLocalState

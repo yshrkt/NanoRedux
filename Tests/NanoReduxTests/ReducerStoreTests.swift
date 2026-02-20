@@ -16,7 +16,7 @@ import Testing
         func callAsFunction(
             into _: inout TestState,
             action _: TestAction,
-            dependencies _: TestDependencies
+            dependencies _: TestDependencies,
         ) -> Effect<TestAction> {
             .none
         }
@@ -25,7 +25,7 @@ import Testing
     let store = Store<TestState, TestAction>.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
-        dependencies: TestDependencies()
+        dependencies: TestDependencies(),
     )
 
     #expect(store.state.count == 5)
@@ -45,7 +45,7 @@ import Testing
         func callAsFunction(
             into state: inout TestState,
             action: TestAction,
-            dependencies _: TestDependencies
+            dependencies _: TestDependencies,
         ) -> Effect<TestAction> {
             if case .increment = action {
                 state.count += 1
@@ -57,7 +57,7 @@ import Testing
     let store = Store<TestState, TestAction>.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
-        dependencies: TestDependencies()
+        dependencies: TestDependencies(),
     )
 
     store.send(.increment)
@@ -81,7 +81,7 @@ import Testing
         func callAsFunction(
             into state: inout TestState,
             action: TestAction,
-            dependencies _: TestDependencies
+            dependencies _: TestDependencies,
         ) -> Effect<TestAction> {
             if case .increment = action {
                 state.count += 1
@@ -93,7 +93,7 @@ import Testing
     let store = Store<TestState, TestAction>.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
-        dependencies: TestDependencies()
+        dependencies: TestDependencies(),
     )
 
     store.send(.increment)

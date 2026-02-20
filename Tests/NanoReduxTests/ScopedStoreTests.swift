@@ -21,7 +21,7 @@ import Testing
         func callAsFunction(
             into _: inout ParentState,
             action _: ParentAction,
-            dependencies _: ()
+            dependencies _: (),
         ) -> Effect<ParentAction> {
             .none
         }
@@ -30,12 +30,12 @@ import Testing
     let parentStore = Store<ParentState, ParentAction>.reducer(
         initialState: ParentState(),
         reducer: ParentReducer(),
-        dependencies: ()
+        dependencies: (),
     )
 
     let scopedStore = parentStore.scope(
         state: { $0 },
-        action: { $0 }
+        action: { $0 },
     )
 
     #expect(scopedStore.state.value == "parent")
@@ -54,7 +54,7 @@ import Testing
         func callAsFunction(
             into state: inout ParentState,
             action: ParentAction,
-            dependencies _: ()
+            dependencies _: (),
         ) -> Effect<ParentAction> {
             if case .increment = action {
                 state.counter += 1
@@ -73,12 +73,12 @@ import Testing
     let parentStore = Store<ParentState, ParentAction>.reducer(
         initialState: ParentState(),
         reducer: ParentReducer(),
-        dependencies: ()
+        dependencies: (),
     )
 
     let scopedStore = parentStore.scope(
         state: { ParentState(counter: $0.counter) },
-        action: { (_: LocalAction) in ParentAction.increment }
+        action: { (_: LocalAction) in ParentAction.increment },
     )
 
     #expect(scopedStore.state.counter == 0)

@@ -13,7 +13,7 @@ public struct Effect<Action: Sendable> {
 
     private init(
         lifetime: EffectLifetime,
-        run: @escaping @Sendable () async -> Action?
+        run: @escaping @Sendable () async -> Action?,
     ) {
         self.lifetime = lifetime
         self.run = run
@@ -25,7 +25,7 @@ public struct Effect<Action: Sendable> {
 
     public static func run(
         lifetime: EffectLifetime = .storeBound,
-        _ run: @escaping @Sendable () async -> Action?
+        _ run: @escaping @Sendable () async -> Action?,
     ) -> Self {
         .init(lifetime: lifetime, run: run)
     }
@@ -36,7 +36,7 @@ public struct Effect<Action: Sendable> {
 
     public func map<NewAction: Sendable>(
         namespace: Any.Type = Self.self,
-        _ action: @escaping @Sendable (Action) -> NewAction
+        _ action: @escaping @Sendable (Action) -> NewAction,
     ) -> Effect<NewAction> {
         mapAction(action).mapReplaceableKey {
             .init($0, namespace: ObjectIdentifier(namespace))
@@ -50,25 +50,24 @@ public struct Effect<Action: Sendable> {
 
 private extension Effect {
     func mapAction<NewAction: Sendable>(
-        _ transform: @escaping @Sendable (Action) -> NewAction
+        _ transform: @escaping @Sendable (Action) -> NewAction,
     ) -> Effect<NewAction> {
-        let run = self.run
+        let run = run
         return .init(lifetime: lifetime) {
             await run().map(transform)
         }
     }
 
     func mapReplaceableKey(
-        _ transform: @escaping (EffectLifetime.ReplaceableKey) -> EffectLifetime.ReplaceableKey
+        _ transform: @escaping (EffectLifetime.ReplaceableKey) -> EffectLifetime.ReplaceableKey,
     ) -> Effect<Action> {
-        let newLifetime: EffectLifetime
-        switch lifetime {
+        let newLifetime: EffectLifetime = switch lifetime {
         case let .replaceable(key):
-            newLifetime = .replaceable(key: transform(key))
+            .replaceable(key: transform(key))
         case .storeBound:
-            newLifetime = .storeBound
+            .storeBound
         case .detached:
-            newLifetime = .detached
+            .detached
         }
         return .init(lifetime: newLifetime, run: run)
     }

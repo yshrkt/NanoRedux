@@ -25,14 +25,14 @@ final class ReducerStore<R: Reducer>: Storing {
     init(
         initialState: State,
         reducer: R,
-        dependencies: R.Dependencies
+        dependencies: R.Dependencies,
     ) {
         state = initialState
         self.reducer = reducer
         self.dependencies = dependencies
 
         let stream = AsyncStream<Action>(
-            bufferingPolicy: .bufferingNewest(Constants.actionBufferLimit)
+            bufferingPolicy: .bufferingNewest(Constants.actionBufferLimit),
         ) { [weak self] continuation in
             self?.continuation = continuation
         }
@@ -41,11 +41,11 @@ final class ReducerStore<R: Reducer>: Storing {
             guard let self else { return }
             for await action in stream {
                 let effect = self.reducer(
-                    into: &self.state,
+                    into: &state,
                     action: action,
-                    dependencies: self.dependencies
+                    dependencies: self.dependencies,
                 )
-                self.runtime.run(effect) { [weak self] nextAction in
+                runtime.run(effect) { [weak self] nextAction in
                     self?.continuation?.yield(nextAction)
                 }
             }

@@ -16,7 +16,7 @@ public final class Store<State: Observable, Action: Sendable>: Storing {
     private let _send: (Action) -> Void
 
     public var state: State {
-        return _state()
+        _state()
     }
 
     private init<Core: Storing>(_ core: Core) where Core.State == State, Core.Action == Action {
@@ -32,39 +32,39 @@ public final class Store<State: Observable, Action: Sendable>: Storing {
     public static func reducer<R: Reducer>(
         initialState: State,
         reducer: R,
-        dependencies: R.Dependencies
+        dependencies: R.Dependencies,
     ) -> Store<State, Action> where R.State == State, R.Action == Action {
         Store(
             ReducerStore(
                 initialState: initialState,
                 reducer: reducer,
-                dependencies: dependencies
-            )
+                dependencies: dependencies,
+            ),
         )
     }
 
     public func scope<ChildState, ChildAction>(
         state toChildState: @escaping (State) -> ChildState,
-        action toParentAction: @escaping (ChildAction) -> Action
+        action toParentAction: @escaping (ChildAction) -> Action,
     ) -> Store<ChildState, ChildAction> {
         Store<ChildState, ChildAction>.scope(
             parent: self,
             toLocalState: toChildState,
-            toParentAction: toParentAction
+            toParentAction: toParentAction,
         )
     }
 
     private static func scope<ParentState, ParentAction>(
         parent: Store<ParentState, ParentAction>,
         toLocalState: @escaping (ParentState) -> State,
-        toParentAction: @escaping (Action) -> ParentAction
+        toParentAction: @escaping (Action) -> ParentAction,
     ) -> Store<State, Action> {
         Store(
             ScopedStore(
                 parent: parent,
                 toLocalState: toLocalState,
-                toParentAction: toParentAction
-            )
+                toParentAction: toParentAction,
+            ),
         )
     }
 }

@@ -15,6 +15,6 @@ public protocol Reducer {
     func callAsFunction(
         into state: inout State,
         action: Action,
-        dependencies: Dependencies
+        dependencies: Dependencies,
     ) -> Effect<Action>
 }
