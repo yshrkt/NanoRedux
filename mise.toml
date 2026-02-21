@@ -3,3 +3,23 @@ jj = "0.38.0"
 tuist = "4.146.0"
 swiftformat = "0.58.7"
 swiftlint = "0.63.2"
+
+[tasks.build]
+description = "Build"
+run = "swift build"
+
+[tasks.test]
+description = "Test"
+run = "swift test"
+
+[tasks.lint]
+description = "Lint"
+run = "swiftlint lint Sources Tests Example-iOS/Sources"
+
+[tasks.format]
+description = "Format"
+run = [
+    "swiftformat Sources Tests Example-iOS/Sources",
+    "swiftlint lint --autocorrect Sources Tests Example-iOS/Sources"
+]
+dir = "{{cwd}}"
