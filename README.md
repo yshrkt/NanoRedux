@@ -15,7 +15,7 @@ Add NanoRedux to your `Package.swift` dependencies:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/yshrkt/NanoRedux.git", from: "0.1")
+    .package(url: "https://github.com/yshrkt/NanoRedux.git", from: "0.1.0")
 ]
 ```
 
