@@ -10,13 +10,16 @@ import Observation
 enum AppFeature {
     @Observable final class State {
         fileprivate(set) var todo: TodoFeature.State
+        fileprivate(set) var effects: EffectDemoFeature.State
         fileprivate(set) var settings: SettingsFeature.State
 
         init(
             todo: TodoFeature.State = .init(),
+            effects: EffectDemoFeature.State = .init(),
             settings: SettingsFeature.State = .init(),
         ) {
             self.todo = todo
+            self.effects = effects
             self.settings = settings
         }
     }
@@ -24,6 +27,7 @@ enum AppFeature {
     enum Action: Sendable {
         case appLaunched
         case todo(TodoFeature.Action)
+        case effects(EffectDemoFeature.Action)
         case settings(SettingsFeature.Action)
     }
 
@@ -33,6 +37,7 @@ enum AppFeature {
 
     struct Reducer: NanoRedux.Reducer {
         private let todoReducer = TodoFeature.Reducer()
+        private let effectDemoReducer = EffectDemoFeature.Reducer()
         private let settingsReducer = SettingsFeature.Reducer()
 
         init() {}
@@ -55,6 +60,15 @@ enum AppFeature {
                     dependencies: dependencies.todo,
                 ).map(namespace: Self.self) {
                     Action.todo($0)
+                }
+
+            case let .effects(childAction):
+                effectDemoReducer(
+                    into: &state.effects,
+                    action: childAction,
+                    dependencies: (),
+                ).map(namespace: Self.self) {
+                    Action.effects($0)
                 }
 
             case let .settings(childAction):

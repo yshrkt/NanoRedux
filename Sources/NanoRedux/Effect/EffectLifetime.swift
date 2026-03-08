@@ -5,7 +5,7 @@
 //  Created by Yoshihiro Kato on 2026/02/20.
 //
 
-public enum EffectLifetime: Equatable {
+public enum EffectLifetime: Equatable, Sendable {
     // Cancels automatically when the store is deinitialized.
     case storeBound
     // Replaces any in-flight effect that shares the same key.
@@ -15,7 +15,7 @@ public enum EffectLifetime: Equatable {
 }
 
 public extension EffectLifetime {
-    struct ReplaceableKey: Hashable {
+    struct ReplaceableKey: Hashable, @unchecked Sendable {
         public let namespace: ObjectIdentifier?
         public let key: AnyHashable
 

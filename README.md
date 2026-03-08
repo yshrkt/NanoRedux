@@ -76,7 +76,6 @@ Effects handle side effects like network requests, timers, or any asynchronous o
 ```swift
 public struct Effect<Action: Sendable> {
     public let lifetime: EffectLifetime
-    let run: @Sendable () async -> Action?
 }
 ```
 
@@ -101,6 +100,41 @@ Effect.run {
 Effect.run(lifetime: .replaceable("fetch")) {
     let result = try await apiClient.fetch()
     return .fetchComplete(result)
+}
+```
+
+**Effect Composition:**
+
+| Composition | Description |
+|-------------|-------------|
+| `.concat { ... }` | Runs child effects serially in declaration order |
+| `.merge { ... }` | Runs child effects concurrently |
+| `.throttle(for:key:) { ... }` | Runs the leading effect immediately and drops subsequent effects during the interval. The `key` defines which effects share the same throttle window |
+| `.debounce(for:key:) { ... }` | Delays execution and keeps only the latest effect for the key. The `key` defines which pending effects replace one another |
+
+Example:
+
+```swift
+// Serial execution
+Effect.concat {
+    Effect.run { .step1Finished }
+    Effect.run { .step2Finished }
+}
+
+// Concurrent execution
+Effect.merge {
+    Effect.run { .profileLoaded(try await api.profile()) }
+    Effect.run { .postsLoaded(try await api.posts()) }
+}
+
+// Leading-only throttle
+Effect.throttle(for: .seconds(1), key: "save") {
+    Effect.run { .saveRequested }
+}
+
+// Debounce latest input
+Effect.debounce(for: .milliseconds(300), key: "search") {
+    Effect.run { .searchRequested }
 }
 ```
 

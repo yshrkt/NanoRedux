@@ -22,6 +22,11 @@ struct RootView: View {
                     Label("Todos", systemImage: "checklist")
                 }
 
+            EffectDemoView(store: store.effectsStore)
+                .tabItem {
+                    Label("Effects", systemImage: "bolt.horizontal.circle")
+                }
+
             SettingsView(store: store.settingsStore)
                 .tabItem {
                     Label("Settings", systemImage: "gearshape")
@@ -36,6 +41,10 @@ struct RootView: View {
 private extension Store<AppFeature.State, AppFeature.Action> {
     var todoStore: Store<TodoFeature.State, TodoFeature.Action> {
         scope(state: { $0.todo }, action: { .todo($0) })
+    }
+
+    var effectsStore: Store<EffectDemoFeature.State, EffectDemoFeature.Action> {
+        scope(state: { $0.effects }, action: { .effects($0) })
     }
 
     var settingsStore: Store<SettingsFeature.State, SettingsFeature.Action> {
