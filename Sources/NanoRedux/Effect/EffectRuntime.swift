@@ -34,7 +34,7 @@ final class EffectRuntime<Action: Sendable> {
         let id = UUID()
         let task = Task { [weak self] in
             guard let self else { return }
-            _ = await self.start(effect, emit: emit)
+            _ = await start(effect, emit: emit)
             await MainActor.run {
                 self.finish(id: id, kind: .plain)
             }
@@ -82,7 +82,7 @@ private extension EffectRuntime {
                 for effect in effects {
                     group.addTask { [weak self] in
                         guard let self else { return .cancelled }
-                        return await self.start(effect, emit: emit)
+                        return await start(effect, emit: emit)
                     }
                 }
 
@@ -94,6 +94,7 @@ private extension EffectRuntime {
                 }
                 return cancelled ? .cancelled : .completed
             }
+
         case let .throttle(key, interval, effect):
             return await startThrottle(
                 key: key,
@@ -166,7 +167,7 @@ private extension EffectRuntime {
             guard let self, !Task.isCancelled else {
                 return .cancelled
             }
-            return await self.start(effect, emit: emit)
+            return await start(effect, emit: emit)
         }
 
         return await awaitManaged(task, kind: .debounce(key))

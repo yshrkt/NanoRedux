@@ -126,6 +126,32 @@ public struct Effect<Action: Sendable>: Sendable {
         )
     }
 
+    public func throttled(
+        for interval: Duration,
+        key: some Hashable,
+        namespace: Any.Type? = nil,
+    ) -> Self {
+        .throttle(
+            for: interval,
+            key: key,
+            namespace: namespace,
+            effect: self,
+        )
+    }
+
+    public func debounced(
+        for interval: Duration,
+        key: some Hashable,
+        namespace: Any.Type? = nil,
+    ) -> Self {
+        .debounce(
+            for: interval,
+            key: key,
+            namespace: namespace,
+            effect: self,
+        )
+    }
+
     public func execute() async -> Action? {
         let collector = ActionCollector<Action>()
         await collectActions { action in
@@ -183,24 +209,24 @@ private extension Effect {
     ) -> Effect<NewAction> {
         switch operation {
         case let .run(run):
-            return .init(lifetime: lifetime, operation: .run {
+            .init(lifetime: lifetime, operation: .run {
                 await run().map(transform)
             })
 
         case let .concat(effects):
-            return .init(
+            .init(
                 lifetime: .storeBound,
                 operation: .concat(effects.map { $0.mapAction(transform) }),
             )
 
         case let .merge(effects):
-            return .init(
+            .init(
                 lifetime: .storeBound,
                 operation: .merge(effects.map { $0.mapAction(transform) }),
             )
 
         case let .throttle(key, interval, effect):
-            return .init(
+            .init(
                 lifetime: .storeBound,
                 operation: .throttle(
                     key: key,
@@ -210,7 +236,7 @@ private extension Effect {
             )
 
         case let .debounce(key, interval, effect):
-            return .init(
+            .init(
                 lifetime: .storeBound,
                 operation: .debounce(
                     key: key,

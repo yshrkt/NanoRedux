@@ -131,11 +131,17 @@ Effect.merge {
 Effect.throttle(for: .seconds(1), key: "save") {
     Effect.run { .saveRequested }
 }
+// or using instance method
+Effect.run { .saveRequested }
+    .throttled(for: .seconds(1), key: "save")
 
 // Debounce latest input
 Effect.debounce(for: .milliseconds(300), key: "search") {
     Effect.run { .searchRequested }
 }
+// or using instance method
+Effect.run { .searchRequested }
+    .debounced(for: .milliseconds(300), key: "search")
 ```
 
 ## Usage Example

@@ -28,7 +28,7 @@ struct EffectDemoView: View {
                         }
                         .buttonStyle(.borderedProminent)
                     }
-                    
+
                     demoSection(
                         title: "Merge",
                         description: "Runs child effects concurrently.",
@@ -38,7 +38,7 @@ struct EffectDemoView: View {
                         }
                         .buttonStyle(.borderedProminent)
                     }
-                    
+
                     demoSection(
                         title: "Throttle",
                         description: "Leading-only. Repeated taps within one second are ignored.",
@@ -48,13 +48,13 @@ struct EffectDemoView: View {
                                 store.send(.throttleTapped)
                             }
                             .buttonStyle(.borderedProminent)
-                            
+
                             Text("Throttle fired: \(store.state.throttleCount)")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    
+
                     demoSection(
                         title: "Debounce",
                         description: "Waits for typing to settle before committing the latest value.",
@@ -68,7 +68,7 @@ struct EffectDemoView: View {
                                 ),
                             )
                             .textFieldStyle(.roundedBorder)
-                            
+
                             Text("Debounced text: \(store.state.debouncedText)")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
@@ -83,7 +83,7 @@ struct EffectDemoView: View {
                     Text("Event Log")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
-                    
+
                     if store.state.logs.isEmpty {
                         Text("No events yet.")
                             .font(.subheadline)
@@ -132,10 +132,10 @@ struct EffectDemoView: View {
     }
 
     @ViewBuilder
-    private func demoSection<Content: View>(
+    private func demoSection(
         title: String,
         description: String,
-        @ViewBuilder content: () -> Content,
+        @ViewBuilder content: () -> some View,
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)

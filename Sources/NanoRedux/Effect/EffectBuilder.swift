@@ -12,7 +12,7 @@ public enum EffectBuilder<Action: Sendable> {
     }
 
     public static func buildBlock(_ components: [Effect<Action>]...) -> [Effect<Action>] {
-        components.flatMap { $0 }
+        components.flatMap(\.self)
     }
 
     public static func buildEither(first component: [Effect<Action>]) -> [Effect<Action>] {
@@ -28,7 +28,7 @@ public enum EffectBuilder<Action: Sendable> {
     }
 
     public static func buildArray(_ components: [[Effect<Action>]]) -> [Effect<Action>] {
-        components.flatMap { $0 }
+        components.flatMap(\.self)
     }
 
     public static func buildLimitedAvailability(_ component: [Effect<Action>]) -> [Effect<Action>] {
