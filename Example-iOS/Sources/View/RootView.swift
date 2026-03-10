@@ -55,7 +55,8 @@ private extension Store<AppFeature.State, AppFeature.Action> {
 #Preview {
     RootView(store: .reducer(
         initialState: .init(),
-        reducer: AppFeature.Reducer(),
-        dependencies: AppFeature.Dependencies(todo: .init(repository: MockTodoRepository())),
+        reducer: AppFeature.Reducer(
+            dependencies: AppFeature.Dependencies(todo: .init(repository: MockTodoRepository())),
+        ),
     ))
 }

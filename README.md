@@ -35,8 +35,13 @@ Create a store with a reducer:
 ```swift
 let store = Store.reducer(
     initialState: MyFeature.State(),
-    reducer: MyFeature.Reducer(),
-    dependencies: MyFeature.Dependencies()
+    reducer: MyFeature.Reducer()
+)
+
+// If your reducer conforms to InjectableReducer:
+let injectedStore = Store.reducer(
+    initialState: MyFeature.State(),
+    reducer: MyFeature.Reducer(dependencies: MyFeature.Dependencies())
 )
 ```
 
@@ -53,19 +58,24 @@ let childStore = parentStore.scope(
 
 ### Reducer
 
-A `Reducer` defines how your app's state changes in response to actions. It's a pure function that takes the current state, an action, and dependencies, then returns a new state and optionally an effect.
+A `Reducer` defines how your app's state changes in response to actions. Implement `reduce(into:action:)`; `callAsFunction(into:action:)` is available as a default convenience.
 
 ```swift
 public protocol Reducer {
     associatedtype State: Observable
     associatedtype Action: Sendable
+
+    func reduce(
+        into state: inout State,
+        action: Action
+    ) -> Effect<Action>
+}
+
+public protocol InjectableReducer: Reducer {
     associatedtype Dependencies
 
-    func callAsFunction(
-        into state: inout State,
-        action: Action,
-        dependencies: Dependencies,
-    ) -> Effect<Action>
+    var dependencies: Dependencies { get }
+    init(dependencies: Dependencies)
 }
 ```
 
@@ -165,12 +175,9 @@ enum CounterFeature {
     }
 
     struct Reducer: NanoRedux.Reducer {
-        typealias Dependencies = Void
-
-        func callAsFunction(
+        func reduce(
             into state: inout State,
-            action: Action,
-            dependencies: Dependencies
+            action: Action
         ) -> Effect<Action> {
             switch action {
             case .increment:
@@ -226,28 +233,28 @@ enum AppFeature {
         let todo: TodoFeature.Dependencies
     }
 
-    struct Reducer: NanoRedux.Reducer {
-        private let todoReducer = TodoFeature.Reducer()
+    struct Reducer: NanoRedux.InjectableReducer {
+        let dependencies: Dependencies
+        private let todoReducer: TodoFeature.Reducer
         private let settingsReducer = SettingsFeature.Reducer()
 
-        func callAsFunction(
-            into state: inout State,
-            action: Action,
-            dependencies: Dependencies
-        ) -> Effect<Action> {
+        init(dependencies: Dependencies) {
+            self.dependencies = dependencies
+            todoReducer = TodoFeature.Reducer(dependencies: dependencies.todo)
+        }
+
+        func reduce(into state: inout State, action: Action) -> Effect<Action> {
             switch action {
             case let .todo(childAction):
                 return todoReducer(
                     into: &state.todo,
-                    action: childAction,
-                    dependencies: dependencies.todo
+                    action: childAction
                 ).map { Action.todo($0) }
 
             case let .settings(childAction):
                 return settingsReducer(
                     into: &state.settings,
-                    action: childAction,
-                    dependencies: ()
+                    action: childAction
                 ).mapNone()
             }
         }

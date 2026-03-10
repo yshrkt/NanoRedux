@@ -89,7 +89,8 @@ struct TodoView: View {
 #Preview {
     TodoView(store: .reducer(
         initialState: .init(),
-        reducer: TodoFeature.Reducer(),
-        dependencies: TodoFeature.Dependencies(repository: MockTodoRepository()),
+        reducer: TodoFeature.Reducer(
+            dependencies: TodoFeature.Dependencies(repository: MockTodoRepository()),
+        ),
     ))
 }

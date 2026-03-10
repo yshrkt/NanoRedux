@@ -11,8 +11,7 @@ import SwiftUI
 struct ExampleIOSApp: App {
     @State private var appStore = Store.reducer(
         initialState: AppFeature.State(),
-        reducer: AppFeature.Reducer(),
-        dependencies: .init(todo: .init(repository: MockTodoRepository())),
+        reducer: AppFeature.Reducer(dependencies: .init(todo: .init(repository: MockTodoRepository()))),
     )
 
     var body: some Scene {

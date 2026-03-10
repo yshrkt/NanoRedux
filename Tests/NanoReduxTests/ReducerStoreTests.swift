@@ -10,13 +10,10 @@ import Testing
     enum TestAction: Sendable {
         case increment
     }
-    struct TestDependencies {}
-
     struct TestReducer: Reducer {
-        func callAsFunction(
+        func reduce(
             into _: inout TestState,
             action _: TestAction,
-            dependencies _: TestDependencies,
         ) -> Effect<TestAction> {
             .none
         }
@@ -25,7 +22,6 @@ import Testing
     let store = Store<TestState, TestAction>.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
-        dependencies: TestDependencies(),
     )
 
     #expect(store.state.count == 5)
@@ -39,16 +35,19 @@ import Testing
     enum TestAction: Sendable {
         case increment
     }
-    struct TestDependencies {}
+    struct TestReducer: InjectableReducer {
+        struct Dependencies {
+            let step: Int
+        }
 
-    struct TestReducer: Reducer {
-        func callAsFunction(
+        let dependencies: Dependencies
+
+        func reduce(
             into state: inout TestState,
             action: TestAction,
-            dependencies _: TestDependencies,
         ) -> Effect<TestAction> {
             if case .increment = action {
-                state.count += 1
+                state.count += dependencies.step
             }
             return .none
         }
@@ -56,8 +55,7 @@ import Testing
 
     let store = Store<TestState, TestAction>.reducer(
         initialState: TestState(),
-        reducer: TestReducer(),
-        dependencies: TestDependencies(),
+        reducer: TestReducer(dependencies: .init(step: 1)),
     )
 
     store.send(.increment)
@@ -75,13 +73,10 @@ import Testing
     enum TestAction: Sendable {
         case increment
     }
-    struct TestDependencies {}
-
     struct TestReducer: Reducer {
-        func callAsFunction(
+        func reduce(
             into state: inout TestState,
             action: TestAction,
-            dependencies _: TestDependencies,
         ) -> Effect<TestAction> {
             if case .increment = action {
                 state.count += 1
@@ -93,7 +88,6 @@ import Testing
     let store = Store<TestState, TestAction>.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
-        dependencies: TestDependencies(),
     )
 
     store.send(.increment)

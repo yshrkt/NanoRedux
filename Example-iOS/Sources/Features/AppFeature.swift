@@ -35,17 +35,20 @@ enum AppFeature {
         let todo: TodoFeature.Dependencies
     }
 
-    struct Reducer: NanoRedux.Reducer {
-        private let todoReducer = TodoFeature.Reducer()
+    struct Reducer: NanoRedux.InjectableReducer {
+        let dependencies: Dependencies
+        private let todoReducer: TodoFeature.Reducer
         private let effectDemoReducer = EffectDemoFeature.Reducer()
         private let settingsReducer = SettingsFeature.Reducer()
 
-        init() {}
+        init(dependencies: Dependencies) {
+            self.dependencies = dependencies
+            todoReducer = TodoFeature.Reducer(dependencies: dependencies.todo)
+        }
 
-        func callAsFunction(
+        func reduce(
             into state: inout State,
             action: Action,
-            dependencies: Dependencies,
         ) -> Effect<Action> {
             switch action {
             case .appLaunched:
@@ -57,7 +60,6 @@ enum AppFeature {
                 todoReducer(
                     into: &state.todo,
                     action: childAction,
-                    dependencies: dependencies.todo,
                 ).map(namespace: Self.self) {
                     Action.todo($0)
                 }
@@ -66,7 +68,6 @@ enum AppFeature {
                 effectDemoReducer(
                     into: &state.effects,
                     action: childAction,
-                    dependencies: (),
                 ).map(namespace: Self.self) {
                     Action.effects($0)
                 }
@@ -75,7 +76,6 @@ enum AppFeature {
                 settingsReducer(
                     into: &state.settings,
                     action: childAction,
-                    dependencies: (),
                 ).mapNone()
             }
         }

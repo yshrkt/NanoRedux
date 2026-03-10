@@ -49,18 +49,19 @@ enum TodoFeature {
         let repository: any TodoRepository
     }
 
-    struct Reducer: NanoRedux.Reducer {
-        func callAsFunction(
+    struct Reducer: NanoRedux.InjectableReducer {
+        let dependencies: Dependencies
+
+        func reduce(
             into state: inout State,
             action: Action,
-            dependencies: Dependencies,
         ) -> Effect<Action> {
             var effect: Effect<Action> = .none
             switch action {
             case .onAppear:
                 state.isLoading = true
                 state.errorMessage = nil
-                effect = loadEffect(lifetime: action.effectLifetime, dependencies: dependencies)
+                effect = loadEffect(lifetime: action.effectLifetime)
 
             case let .inputChanged(text):
                 state.inputText = text
@@ -97,7 +98,7 @@ enum TodoFeature {
             return effect
         }
 
-        private func loadEffect(lifetime: EffectLifetime, dependencies: Dependencies) -> Effect<Action> {
+        private func loadEffect(lifetime: EffectLifetime) -> Effect<Action> {
             .run(lifetime: lifetime) {
                 do {
                     return try await .todosLoaded(dependencies.repository.fetchTodos())

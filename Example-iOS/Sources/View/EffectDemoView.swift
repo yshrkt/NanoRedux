@@ -157,6 +157,5 @@ struct EffectDemoView: View {
     EffectDemoView(store: .reducer(
         initialState: .init(),
         reducer: EffectDemoFeature.Reducer(),
-        dependencies: (),
     ))
 }

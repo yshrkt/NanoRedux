@@ -10,11 +10,25 @@ import Observation
 public protocol Reducer {
     associatedtype State: Observable
     associatedtype Action: Sendable
-    associatedtype Dependencies
 
+    func reduce(
+        into state: inout State,
+        action: Action,
+    ) -> Effect<Action>
+}
+
+public extension Reducer {
     func callAsFunction(
         into state: inout State,
         action: Action,
-        dependencies: Dependencies,
-    ) -> Effect<Action>
+    ) -> Effect<Action> {
+        reduce(into: &state, action: action)
+    }
+}
+
+public protocol InjectableReducer: Reducer {
+    associatedtype Dependencies
+
+    var dependencies: Dependencies { get }
+    init(dependencies: Dependencies)
 }

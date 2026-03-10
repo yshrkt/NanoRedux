@@ -21,10 +21,9 @@ enum SettingsFeature {
     }
 
     struct Reducer: NanoRedux.Reducer {
-        func callAsFunction(
+        func reduce(
             into state: inout State,
             action: Action,
-            dependencies _: Void,
         ) -> Effect<Action> {
             switch action {
             case let .toggleNotifications(isEnabled):

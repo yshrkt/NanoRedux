@@ -18,10 +18,9 @@ import Testing
     }
 
     struct ParentReducer: Reducer {
-        func callAsFunction(
+        func reduce(
             into _: inout ParentState,
             action _: ParentAction,
-            dependencies _: (),
         ) -> Effect<ParentAction> {
             .none
         }
@@ -30,7 +29,6 @@ import Testing
     let parentStore = Store<ParentState, ParentAction>.reducer(
         initialState: ParentState(),
         reducer: ParentReducer(),
-        dependencies: (),
     )
 
     let scopedStore = parentStore.scope(
@@ -51,10 +49,9 @@ import Testing
     }
 
     struct ParentReducer: Reducer {
-        func callAsFunction(
+        func reduce(
             into state: inout ParentState,
             action: ParentAction,
-            dependencies _: (),
         ) -> Effect<ParentAction> {
             if case .increment = action {
                 state.counter += 1
@@ -73,7 +70,6 @@ import Testing
     let parentStore = Store<ParentState, ParentAction>.reducer(
         initialState: ParentState(),
         reducer: ParentReducer(),
-        dependencies: (),
     )
 
     let scopedStore = parentStore.scope(

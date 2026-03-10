@@ -32,13 +32,11 @@ public final class Store<State: Observable, Action: Sendable>: Storing {
     public static func reducer<R: Reducer>(
         initialState: State,
         reducer: R,
-        dependencies: R.Dependencies,
     ) -> Store<State, Action> where R.State == State, R.Action == Action {
         Store(
             ReducerStore(
                 initialState: initialState,
                 reducer: reducer,
-                dependencies: dependencies,
             ),
         )
     }

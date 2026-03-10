@@ -35,6 +35,5 @@ struct SettingsView: View {
     SettingsView(store: .reducer(
         initialState: .init(),
         reducer: SettingsFeature.Reducer(),
-        dependencies: (),
     ))
 }

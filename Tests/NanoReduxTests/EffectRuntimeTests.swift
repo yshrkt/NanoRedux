@@ -14,10 +14,9 @@ import Testing
     }
 
     struct TestReducer: Reducer {
-        func callAsFunction(
+        func reduce(
             into state: inout TestState,
             action: TestAction,
-            dependencies _: (),
         ) -> Effect<TestAction> {
             switch action {
             case .start:
@@ -37,7 +36,6 @@ import Testing
     let store = Store<TestState, TestAction>.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
-        dependencies: (),
     )
 
     store.send(.start)
@@ -59,10 +57,9 @@ import Testing
     }
 
     struct TestReducer: Reducer {
-        func callAsFunction(
+        func reduce(
             into state: inout TestState,
             action: TestAction,
-            dependencies _: (),
         ) -> Effect<TestAction> {
             switch action {
             case .start:
@@ -85,7 +82,6 @@ import Testing
     let store = Store<TestState, TestAction>.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
-        dependencies: (),
     )
 
     store.send(.start)
@@ -107,10 +103,9 @@ import Testing
     }
 
     struct TestReducer: Reducer {
-        func callAsFunction(
+        func reduce(
             into state: inout TestState,
             action: TestAction,
-            dependencies _: (),
         ) -> Effect<TestAction> {
             switch action {
             case let .input(value):
@@ -127,7 +122,6 @@ import Testing
     let store = Store<TestState, TestAction>.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
-        dependencies: (),
     )
 
     store.send(.input("a"))
@@ -152,10 +146,9 @@ import Testing
     }
 
     struct TestReducer: Reducer {
-        func callAsFunction(
+        func reduce(
             into state: inout TestState,
             action: TestAction,
-            dependencies _: (),
         ) -> Effect<TestAction> {
             switch action {
             case .tap:
@@ -172,7 +165,6 @@ import Testing
     let store = Store<TestState, TestAction>.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
-        dependencies: (),
     )
 
     store.send(.tap)

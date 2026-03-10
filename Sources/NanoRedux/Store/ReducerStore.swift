@@ -15,7 +15,6 @@ final class ReducerStore<R: Reducer>: Storing {
     }
 
     private let reducer: R
-    private let dependencies: R.Dependencies
     private let runtime = EffectRuntime<Action>()
     private var continuation: AsyncStream<Action>.Continuation?
 
@@ -25,11 +24,9 @@ final class ReducerStore<R: Reducer>: Storing {
     init(
         initialState: State,
         reducer: R,
-        dependencies: R.Dependencies,
     ) {
         state = initialState
         self.reducer = reducer
-        self.dependencies = dependencies
 
         let stream = AsyncStream<Action>(
             bufferingPolicy: .bufferingNewest(Constants.actionBufferLimit),
@@ -43,7 +40,6 @@ final class ReducerStore<R: Reducer>: Storing {
                 let effect = self.reducer(
                     into: &state,
                     action: action,
-                    dependencies: self.dependencies,
                 )
                 runtime.run(effect) { [weak self] nextAction in
                     self?.continuation?.yield(nextAction)
