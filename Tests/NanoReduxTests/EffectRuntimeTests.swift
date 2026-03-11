@@ -181,3 +181,98 @@ import Testing
 
     #expect(store.state.fireCount == 2)
 }
+
+@MainActor
+@Test func concatMethodChainsEffectsSerially() async throws {
+    struct TestState: Observable {
+        var events: [String] = []
+    }
+    enum TestAction: Sendable {
+        case start
+        case first
+        case second
+        case third
+    }
+
+    struct TestReducer: Reducer {
+        func reduce(
+            into state: inout TestState,
+            action: TestAction,
+        ) -> Effect<TestAction> {
+            switch action {
+            case .start:
+                return Effect.run { .first }
+                    .concat(.run { .second })
+                    .concat(.run { .third })
+            case .first:
+                state.events.append("first")
+            case .second:
+                state.events.append("second")
+            case .third:
+                state.events.append("third")
+            }
+            return .none
+        }
+    }
+
+    let store = Store<TestState, TestAction>.reducer(
+        initialState: TestState(),
+        reducer: TestReducer(),
+    )
+
+    store.send(.start)
+    try await Task.sleep(for: .milliseconds(20))
+
+    #expect(store.state.events == ["first", "second", "third"])
+}
+
+@MainActor
+@Test func mergeMethodChainsEffectsConcurrently() async throws {
+    struct TestState: Observable {
+        var events: [String] = []
+    }
+    enum TestAction: Sendable {
+        case start
+        case fast
+        case slow
+        case medium
+    }
+
+    struct TestReducer: Reducer {
+        func reduce(
+            into state: inout TestState,
+            action: TestAction,
+        ) -> Effect<TestAction> {
+            switch action {
+            case .start:
+                return Effect.run {
+                    try? await Task.sleep(for: .milliseconds(20))
+                    return .slow
+                }
+                .merge(.run { .fast })
+                .merge(.run {
+                    try? await Task.sleep(for: .milliseconds(10))
+                    return .medium
+                })
+            case .fast:
+                state.events.append("fast")
+            case .slow:
+                state.events.append("slow")
+            case .medium:
+                state.events.append("medium")
+            }
+            return .none
+        }
+    }
+
+    let store = Store<TestState, TestAction>.reducer(
+        initialState: TestState(),
+        reducer: TestReducer(),
+    )
+
+    store.send(.start)
+    try await Task.sleep(for: .milliseconds(50))
+
+    #expect(Set(store.state.events) == ["fast", "medium", "slow"])
+    #expect(store.state.events.count == 3)
+}

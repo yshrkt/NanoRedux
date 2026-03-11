@@ -49,7 +49,7 @@ public struct Effect<Action: Sendable>: Sendable {
     public static func concat(
         @EffectBuilder<Action> _ effects: () -> [Effect<Action>],
     ) -> Self {
-        let effects = effects()
+        let effects = flattenConcat(effects())
         guard effects.count == 1 else {
             return .init(lifetime: .storeBound, operation: .concat(effects))
         }
@@ -59,11 +59,25 @@ public struct Effect<Action: Sendable>: Sendable {
     public static func merge(
         @EffectBuilder<Action> _ effects: () -> [Effect<Action>],
     ) -> Self {
-        let effects = effects()
+        let effects = flattenMerge(effects())
         guard effects.count == 1 else {
             return .init(lifetime: .storeBound, operation: .merge(effects))
         }
         return effects[0]
+    }
+
+    public func concat(_ other: Effect<Action>) -> Self {
+        .concat {
+            self
+            other
+        }
+    }
+
+    public func merge(_ other: Effect<Action>) -> Self {
+        .merge {
+            self
+            other
+        }
     }
 
     public static func throttle(
@@ -175,6 +189,38 @@ public struct Effect<Action: Sendable>: Sendable {
 }
 
 private extension Effect {
+    static func flattenConcat(_ effects: [Effect<Action>]) -> [Effect<Action>] {
+        var flattened: [Effect<Action>] = []
+        flattened.reserveCapacity(effects.count)
+
+        for effect in effects {
+            switch effect.operation {
+            case let .concat(nested):
+                flattened.append(contentsOf: flattenConcat(nested))
+            default:
+                flattened.append(effect)
+            }
+        }
+
+        return flattened
+    }
+
+    static func flattenMerge(_ effects: [Effect<Action>]) -> [Effect<Action>] {
+        var flattened: [Effect<Action>] = []
+        flattened.reserveCapacity(effects.count)
+
+        for effect in effects {
+            switch effect.operation {
+            case let .merge(nested):
+                flattened.append(contentsOf: flattenMerge(nested))
+            default:
+                flattened.append(effect)
+            }
+        }
+
+        return flattened
+    }
+
     func collectActions(
         _ emit: @escaping @Sendable (Action) async -> Void,
     ) async {

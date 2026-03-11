@@ -130,12 +130,18 @@ Effect.concat {
     Effect.run { .step1Finished }
     Effect.run { .step2Finished }
 }
+// or using instance method
+Effect.run { .step1Finished }
+    .concat(.run { .step2Finished })
 
 // Concurrent execution
 Effect.merge {
     Effect.run { .profileLoaded(try await api.profile()) }
     Effect.run { .postsLoaded(try await api.posts()) }
 }
+// or using instance method
+Effect.run { .profileLoaded(try await api.profile()) }
+    .merge(.run { .postsLoaded(try await api.posts()) })
 
 // Leading-only throttle
 Effect.throttle(for: .seconds(1), key: "save") {
