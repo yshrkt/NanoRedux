@@ -56,8 +56,10 @@ final class ReducerStore<R: Reducer>: Storing {
             }
         #endif
     }
-
-    @MainActor deinit {
+    
+    // Workaround for release build issue
+    // https://github.com/swiftlang/swift/issues/87462#issuecomment-4030739626
+    @_optimize(none) isolated deinit {
         continuation?.finish()
         loopTask?.cancel()
         runtime.cancelAll()
