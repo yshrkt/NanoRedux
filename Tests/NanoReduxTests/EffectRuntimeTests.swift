@@ -276,3 +276,102 @@ import Testing
     #expect(Set(store.state.events) == ["fast", "medium", "slow"])
     #expect(store.state.events.count == 3)
 }
+
+@MainActor
+@Test func `stream delivers all elements`() async throws {
+    struct TestState: Observable {
+        var values: [Int] = []
+    }
+    enum TestAction: Sendable {
+        case start
+        case received(Int)
+
+
+    }
+
+    struct TestReducer: Reducer {
+        func reduce(
+            into state: inout TestState,
+            action: TestAction,
+        ) -> Effect<TestAction> {
+            switch action {
+            case .start:
+                let stream = AsyncStream<Int> { continuation in
+                    continuation.yield(1)
+                    continuation.yield(2)
+                    continuation.yield(3)
+                    continuation.finish()
+                }
+                return .stream {
+                    stream.map { .received($0) }
+                }
+            case let .received(value):
+                state.values.append(value)
+                return .none
+            }
+        }
+    }
+
+    let store = Store<TestState, TestAction>.reducer(
+        initialState: TestState(),
+        reducer: TestReducer(),
+    )
+
+    store.send(.start)
+
+    try await Task.sleep(for: .milliseconds(100))
+
+    #expect(store.state.values == [1, 2, 3])
+}
+
+@MainActor
+@Test func `stream handles cancellation`() async throws {
+    struct TestState: Observable {
+        var values: [Int] = []
+    }
+    enum TestAction: Sendable {
+        case start
+        case received(Int)
+
+    }
+
+    struct TestReducer: Reducer {
+        func reduce(
+            into state: inout TestState,
+            action: TestAction,
+        ) -> Effect<TestAction> {
+            switch action {
+            case .start:
+                let stream = AsyncStream<Int> { continuation in
+                    Task {
+                        for i in 1 ... 10 {
+                            try? await Task.sleep(for: .milliseconds(20))
+                            continuation.yield(i)
+                        }
+                        continuation.finish()
+                    }
+                }
+                return .stream(lifetime: .replaceable("stream")) {
+                    stream.map { .received($0) }
+                }
+            case let .received(value):
+                state.values.append(value)
+                return .none
+            }
+
+        }
+    }
+
+    let store = Store<TestState, TestAction>.reducer(
+        initialState: TestState(),
+        reducer: TestReducer(),
+    )
+
+    store.send(.start)
+    try await Task.sleep(for: .milliseconds(50))
+
+    store.send(.start)
+    try await Task.sleep(for: .milliseconds(100))
+
+    #expect(store.state.values.count < 10)
+}

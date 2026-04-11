@@ -160,6 +160,31 @@ Effect.run { .searchRequested }
     .debounced(for: .milliseconds(300), key: "search")
 ```
 
+**Stream Effects:**
+
+Use `.stream` to handle `AsyncStream` and other `AsyncSequence` types. This is useful for observing continuous events like WebSocket messages, location updates, or notification center events.
+
+```swift
+// Basic stream
+Effect.stream {
+    messageStream.map { .messageReceived($0) }
+}
+
+// With filtering and transformation
+Effect.stream {
+    eventStream
+        .filter { $0.isValid }
+        .map { .validEventReceived($0) }
+}
+
+// With lifetime management
+Effect.stream(lifetime: .replaceable("webSocket")) {
+    webSocketMessageStream.map { .messageReceived($0) }
+}
+```
+
+> **Note:** The stream's `Failure` type must be `Never`. For throwing streams, handle errors before passing to `.stream` (e.g., using `compactMap` to filter or convert errors).
+
 ## Usage Example
 
 ### Basic Feature

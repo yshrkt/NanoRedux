@@ -8,8 +8,9 @@
 import Foundation
 
 public struct Effect<Action: Sendable>: Sendable {
-    indirect enum Operation<Output: Sendable>: Sendable {
+    indirect enum Operation<Output: Sendable> {
         case run(@Sendable () async -> Output?)
+        case stream(@Sendable () -> AsyncStream<Output>)
         case concat([Effect<Output>])
         case merge([Effect<Output>])
         case throttle(
@@ -44,6 +45,22 @@ public struct Effect<Action: Sendable>: Sendable {
         _ run: @escaping @Sendable () async -> Action?,
     ) -> Self {
         .init(lifetime: lifetime, operation: .run(run))
+    }
+
+    public static func stream<S: AsyncSequence & Sendable>(
+        lifetime: EffectLifetime = .storeBound,
+        _ sequence: @escaping @Sendable () -> S,
+    ) -> Self where S.Element == Action, S.Failure == Never {
+        .init(lifetime: lifetime, operation: .stream {
+            AsyncStream { continuation in
+                Task {
+                    for await element in sequence() {
+                        continuation.yield(element)
+                    }
+                    continuation.finish()
+                }
+            }
+        })
     }
 
     public static func concat(
@@ -230,6 +247,11 @@ private extension Effect {
                 await emit(action)
             }
 
+        case let .stream(stream):
+            for await action in stream() {
+                await emit(action)
+            }
+
         case let .concat(effects):
             for effect in effects {
                 await effect.collectActions(emit)
@@ -257,6 +279,18 @@ private extension Effect {
         case let .run(run):
             .init(lifetime: lifetime, operation: .run {
                 await run().map(transform)
+            })
+
+        case let .stream(stream):
+            .init(lifetime: lifetime, operation: .stream {
+                AsyncStream { continuation in
+                    Task {
+                        for await action in stream() {
+                            continuation.yield(transform(action))
+                        }
+                        continuation.finish()
+                    }
+                }
             })
 
         case let .concat(effects):
@@ -300,6 +334,8 @@ private extension Effect {
         let newOperation: Operation<Action> = switch operation {
         case let .run(run):
             .run(run)
+        case let .stream(stream):
+            .stream(stream)
         case let .concat(effects):
             .concat(effects.map { $0.mapReplaceableKey(transform) })
         case let .merge(effects):

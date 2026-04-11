@@ -2,7 +2,7 @@ import NanoRedux
 import Testing
 
 @MainActor
-@Test func effectExecute() async {
+@Test func `effect execute`() async {
     struct TestAction: Sendable {
         let value: String
     }
@@ -17,7 +17,7 @@ import Testing
 }
 
 @MainActor
-@Test func effectMap() async {
+@Test func `effect map`() async {
     struct TestAction: Sendable {
         let value: Int
     }
@@ -37,7 +37,7 @@ import Testing
 }
 
 @MainActor
-@Test func effectNone() async {
+@Test func `effect none`() async {
     struct TestAction: Sendable {}
 
     let effect = Effect<TestAction>.none
@@ -48,7 +48,7 @@ import Testing
 }
 
 @MainActor
-@Test func effectLifetime() {
+@Test func `effect lifetime`() {
     struct TestAction: Sendable {}
 
     let effect1 = Effect<TestAction>.none

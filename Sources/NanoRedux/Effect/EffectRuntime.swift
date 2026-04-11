@@ -69,6 +69,13 @@ private extension EffectRuntime {
                 emit: emit,
             )
 
+        case let .stream(stream):
+            return await startStream(
+                lifetime: effect.lifetime,
+                stream: stream,
+                emit: emit,
+            )
+
         case let .concat(effects):
             for effect in effects {
                 if await start(effect, emit: emit) == .cancelled {
@@ -122,6 +129,30 @@ private extension EffectRuntime {
             if let next = await run(), !Task.isCancelled {
                 await MainActor.run {
                     emit(next)
+                }
+            }
+        }
+
+        switch lifetime {
+        case let .replaceable(key):
+            return await awaitManaged(task, kind: .replaceable(key))
+        case .storeBound:
+            return await awaitManaged(task, kind: .plain)
+        case .detached:
+            return .completed
+        }
+    }
+
+    func startStream(
+        lifetime: EffectLifetime,
+        stream: @escaping @Sendable () -> AsyncStream<Action>,
+        emit: @escaping @MainActor (Action) -> Void,
+    ) async -> ExecutionResult {
+        let task = Task<Void, Never> {
+            for await action in stream() {
+                if Task.isCancelled { break }
+                await MainActor.run {
+                    emit(action)
                 }
             }
         }
