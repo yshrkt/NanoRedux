@@ -53,11 +53,15 @@ public struct Effect<Action: Sendable>: Sendable {
     ) -> Self where S.Element == Action, S.Failure == Never {
         .init(lifetime: lifetime, operation: .stream {
             AsyncStream { continuation in
-                Task {
+                let task = Task {
                     for await element in sequence() {
+                        guard !Task.isCancelled else { break }
                         continuation.yield(element)
                     }
                     continuation.finish()
+                }
+                continuation.onTermination = { @Sendable _ in
+                    task.cancel()
                 }
             }
         })
@@ -284,11 +288,15 @@ private extension Effect {
         case let .stream(stream):
             .init(lifetime: lifetime, operation: .stream {
                 AsyncStream { continuation in
-                    Task {
+                    let task = Task {
                         for await action in stream() {
+                            guard !Task.isCancelled else { break }
                             continuation.yield(transform(action))
                         }
                         continuation.finish()
+                    }
+                    continuation.onTermination = { @Sendable _ in
+                        task.cancel()
                     }
                 }
             })

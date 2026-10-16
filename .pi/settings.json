@@ -1,0 +1,7 @@
+{
+  "skills": [
+    "~/.pi/agent/optional-skills/dev",
+    "~/.pi/agent/optional-skills/ios-dev",
+    "~/.pi/agent/optional-skills/xcode-27.1"
+  ]
+}
