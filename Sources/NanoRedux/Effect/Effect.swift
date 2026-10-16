@@ -187,10 +187,15 @@ public struct Effect<Action: Sendable>: Sendable {
         )
     }
 
-    /// Executes the effect and returns the last collected action.
+    /// Runs the underlying work for unit tests and returns the last collected action, or `nil` if none.
+    ///
+    /// This helper does not dispatch actions to a store. It bypasses throttle/debounce scheduling
+    /// and ignores effect lifetimes, including replacement and detachment. Use a `Store` to test
+    /// timing, replacement, and lifecycle behavior. Streams must finish or be cancelled to return.
+    ///
     /// Cancellation skips effects that have not started and ignores subsequent actions,
     /// preserving actions already collected. In-flight work must cooperate with task cancellation.
-    public func execute() async -> Action? {
+    public func executeForTesting() async -> Action? {
         let collector = ActionCollector<Action>()
         await collectActions { action in
             await collector.append(action)

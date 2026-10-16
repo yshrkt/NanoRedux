@@ -77,13 +77,13 @@ func replaceableStreamCancelsUnderlyingSubscription(mapCount: Int) async throws 
 
 @MainActor
 @Test(arguments: [false, true])
-func cancellingExecuteCancelsUnderlyingSubscription(mapped: Bool) async throws {
+func cancellingExecuteForTestingCancelsUnderlyingSubscription(mapped: Bool) async throws {
     let subscriptions = StreamSubscriptions()
     var effect = Effect<Int>.stream { subscriptions.observe() }
     if mapped {
         effect = effect.map { $0 + 1 }
     }
-    let task = Task { await effect.execute() }
+    let task = Task { await effect.executeForTesting() }
     defer {
         task.cancel()
         subscriptions.finishAll()
@@ -105,6 +105,6 @@ func cancellingExecuteCancelsUnderlyingSubscription(mapped: Bool) async throws {
         }
     }.map { $0 * 10 }
 
-    let result = await effect.execute()
+    let result = await effect.executeForTesting()
     #expect(result == 20)
 }

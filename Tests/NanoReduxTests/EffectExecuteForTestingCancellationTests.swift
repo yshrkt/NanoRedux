@@ -2,7 +2,7 @@ import NanoRedux
 import Synchronization
 import Testing
 
-// Deliberately ignores cancellation so tests can release in-flight work after cancelling execute().
+// Ignores cancellation so tests can release in-flight work after cancelling executeForTesting().
 private final class ExecutionGate: Sendable {
     private struct State {
         var started = 0
@@ -50,7 +50,7 @@ private func waitUntil(_ condition: @Sendable () -> Bool) async throws {
     try #require(condition())
 }
 
-@Test func cancellingExecuteSkipsRemainingConcatEffects() async throws {
+@Test func cancellingExecuteForTestingSkipsRemainingConcatEffects() async throws {
     let gate = ExecutionGate()
     let secondStarted = Mutex(false)
     let effect = Effect<Int>.concat {
@@ -63,7 +63,7 @@ private func waitUntil(_ condition: @Sendable () -> Bool) async throws {
             return 2
         }
     }
-    let task = Task { await effect.execute() }
+    let task = Task { await effect.executeForTesting() }
     defer {
         task.cancel()
         gate.open()
@@ -79,7 +79,7 @@ private func waitUntil(_ condition: @Sendable () -> Bool) async throws {
 }
 
 @Test(arguments: [false, true])
-func cancellingExecuteDiscardsLateRunResult(mapped: Bool) async throws {
+func cancellingExecuteForTestingDiscardsLateRunResult(mapped: Bool) async throws {
     let gate = ExecutionGate()
     var effect = Effect<Int>.run {
         await gate.wait()
@@ -88,7 +88,7 @@ func cancellingExecuteDiscardsLateRunResult(mapped: Bool) async throws {
     if mapped {
         effect = effect.map { $0 * 10 }
     }
-    let task = Task { await effect.execute() }
+    let task = Task { await effect.executeForTesting() }
     defer {
         task.cancel()
         gate.open()
@@ -107,7 +107,7 @@ private enum CancelledOperation: CaseIterable, Sendable {
 }
 
 @Test(arguments: CancelledOperation.allCases)
-private func alreadyCancelledExecuteDoesNotStartEffects(operation: CancelledOperation) async {
+private func alreadyCancelledExecuteForTestingDoesNotStartEffects(operation: CancelledOperation) async {
     let starts = Mutex(0)
     let leaf = Effect<Int>.run {
         starts.withLock { $0 += 1 }
@@ -127,7 +127,7 @@ private func alreadyCancelledExecuteDoesNotStartEffects(operation: CancelledOper
     }
     let task = Task {
         withUnsafeCurrentTask { $0?.cancel() }
-        return await effect.execute()
+        return await effect.executeForTesting()
     }
     let result = await task.value
 
@@ -135,7 +135,7 @@ private func alreadyCancelledExecuteDoesNotStartEffects(operation: CancelledOper
     #expect(result == nil)
 }
 
-@Test func cancellingExecuteSkipsEffectsAfterStream() async throws {
+@Test func cancellingExecuteForTestingSkipsEffectsAfterStream() async throws {
     let (stream, continuation) = AsyncStream<Int>.makeStream()
     let started = Mutex(false)
     let terminated = Mutex(false)
@@ -152,7 +152,7 @@ private func alreadyCancelledExecuteDoesNotStartEffects(operation: CancelledOper
         secondStarted.withLock { $0 = true }
         return 2
     })
-    let task = Task { await effect.execute() }
+    let task = Task { await effect.executeForTesting() }
     defer {
         task.cancel()
         continuation.finish()
@@ -167,7 +167,7 @@ private func alreadyCancelledExecuteDoesNotStartEffects(operation: CancelledOper
     #expect(result == nil)
 }
 
-@Test func cancellingExecuteCancelsMergedBranchesAndSkipsNestedConcat() async throws {
+@Test func cancellingExecuteForTestingCancelsMergedBranchesAndSkipsNestedConcat() async throws {
     let gate = ExecutionGate()
     let secondStarted = Mutex(false)
     let effect = Effect<Int>.merge {
@@ -186,7 +186,7 @@ private func alreadyCancelledExecuteDoesNotStartEffects(operation: CancelledOper
             }
         }
     }
-    let task = Task { await effect.execute() }
+    let task = Task { await effect.executeForTesting() }
     defer {
         task.cancel()
         gate.open()
@@ -201,13 +201,13 @@ private func alreadyCancelledExecuteDoesNotStartEffects(operation: CancelledOper
     #expect(result == nil)
 }
 
-@Test func cancellingExecutePreservesPreviouslyCollectedAction() async throws {
+@Test func cancellingExecuteForTestingPreservesPreviouslyCollectedAction() async throws {
     let gate = ExecutionGate()
     let effect = Effect<Int>.run { 1 }.concat(.run {
         await gate.wait()
         return 2
     })
-    let task = Task { await effect.execute() }
+    let task = Task { await effect.executeForTesting() }
     defer {
         task.cancel()
         gate.open()
@@ -221,7 +221,7 @@ private func alreadyCancelledExecuteDoesNotStartEffects(operation: CancelledOper
     #expect(result == 1)
 }
 
-@Test func executeCompletesComposedEffectsWithoutCancellation() async {
+@Test func executeForTestingCompletesComposedEffectsWithoutCancellation() async {
     let events = Mutex<[Int]>([])
     let effect = Effect<Int>.concat {
         Effect.merge {
@@ -240,7 +240,7 @@ private func alreadyCancelledExecuteDoesNotStartEffects(operation: CancelledOper
         }
     }
 
-    let result = await effect.execute()
+    let result = await effect.executeForTesting()
 
     #expect(result == 3)
     #expect(events.withLock { Set($0) } == [1, 2, 3])

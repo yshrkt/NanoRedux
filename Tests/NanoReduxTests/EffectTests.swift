@@ -2,7 +2,7 @@ import NanoRedux
 import Testing
 
 @MainActor
-@Test func `effect execute`() async {
+@Test func `effect execute for testing`() async {
     struct TestAction: Sendable {
         let value: String
     }
@@ -11,7 +11,7 @@ import Testing
         TestAction(value: "hello")
     }
 
-    let result = await effect.execute()
+    let result = await effect.executeForTesting()
 
     #expect(result?.value == "hello")
 }
@@ -31,7 +31,7 @@ import Testing
         NewAction(doubled: action.value * 2)
     }
 
-    let result = await effect.execute() as NewAction?
+    let result = await effect.executeForTesting() as NewAction?
 
     #expect(result?.doubled == 10)
 }
@@ -42,7 +42,7 @@ import Testing
 
     let effect = Effect<TestAction>.none
 
-    let result = await effect.execute()
+    let result = await effect.executeForTesting()
 
     #expect(result == nil)
 }
