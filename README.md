@@ -187,6 +187,10 @@ Effect.stream(lifetime: .replaceable("webSocket")) {
 
 > **Note:** The stream's `Failure` type must be `Never`. For throwing streams, handle errors before passing to `.stream` (e.g., using `compactMap` to filter or convert errors).
 
+**Testing Effects:**
+
+Use `await effect.executeForTesting()` in unit tests to obtain the last collected action. This helper bypasses debounce/throttle scheduling and lifetime policies; test those behaviors through a Store. See [CHANGELOG.md](./CHANGELOG.md) for migration notes.
+
 ## Usage Example
 
 ### Basic Feature
