@@ -13,10 +13,6 @@ final class ReducerStore<R: Reducer>: Storing {
     typealias State = R.State
     typealias Action = R.Action
 
-    private enum Constants {
-        static var actionBufferLimit: Int { 256 }
-    }
-
     private let reducer: R
     private let runtime = EffectRuntime<Action>()
     @ObservationIgnored private var continuation: AsyncStream<Action>.Continuation?
@@ -32,7 +28,7 @@ final class ReducerStore<R: Reducer>: Storing {
         self.reducer = reducer
 
         let stream = AsyncStream<Action>(
-            bufferingPolicy: .bufferingNewest(Constants.actionBufferLimit),
+            bufferingPolicy: .unbounded,
         ) { [weak self] continuation in
             self?.continuation = continuation
         }
@@ -58,12 +54,7 @@ final class ReducerStore<R: Reducer>: Storing {
     }
 
     func send(_ action: Action) {
-        let result = continuation?.yield(action)
-        #if DEBUG
-            if case .dropped = result {
-                assertionFailure("Action dropped: buffer limit=\(Constants.actionBufferLimit)")
-            }
-        #endif
+        continuation?.yield(action)
     }
     
     // Workaround for release build issue

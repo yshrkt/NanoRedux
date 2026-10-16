@@ -30,6 +30,8 @@ Or add it via Xcode:
 
 The `Store` holds your app's state and handles action dispatching. It's `@Observable` and works seamlessly with SwiftUI.
 
+Actions use an unbounded buffer to avoid dropping bursts. Keep reducers fast and coalesce high-frequency events before dispatching to limit memory growth.
+
 Create a store with a reducer:
 
 ```swift
