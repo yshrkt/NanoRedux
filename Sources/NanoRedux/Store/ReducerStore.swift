@@ -35,13 +35,14 @@ final class ReducerStore<R: Reducer>: Storing {
         }
 
         loopTask = Task { @MainActor [weak self] in
-            guard let self else { return }
             for await action in stream {
+                // Retain the store only while processing an action, not while waiting for one.
+                guard let self else { return }
                 let effect = self.reducer(
-                    into: &state,
+                    into: &self.state,
                     action: action,
                 )
-                runtime.run(effect) { [weak self] nextAction in
+                self.runtime.run(effect) { [weak self] nextAction in
                     self?.continuation?.yield(nextAction)
                 }
             }
