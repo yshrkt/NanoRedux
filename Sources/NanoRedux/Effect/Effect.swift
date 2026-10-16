@@ -187,6 +187,9 @@ public struct Effect<Action: Sendable>: Sendable {
         )
     }
 
+    /// Executes the effect and returns the last collected action.
+    /// Cancellation skips effects that have not started and ignores subsequent actions,
+    /// preserving actions already collected. In-flight work must cooperate with task cancellation.
     public func execute() async -> Action? {
         let collector = ActionCollector<Action>()
         await collectActions { action in
@@ -245,29 +248,32 @@ private extension Effect {
     func collectActions(
         _ emit: @escaping @Sendable (Action) async -> Void,
     ) async {
+        guard !Task.isCancelled else { return }
+
         switch operation {
         case let .run(run):
-            if let action = await run() {
+            if let action = await run(), !Task.isCancelled {
                 await emit(action)
             }
 
         case let .stream(stream):
             for await action in stream() {
+                guard !Task.isCancelled else { return }
                 await emit(action)
             }
 
         case let .concat(effects):
             for effect in effects {
+                guard !Task.isCancelled else { return }
                 await effect.collectActions(emit)
             }
 
         case let .merge(effects):
             await withTaskGroup(of: Void.self) { group in
                 for effect in effects {
-                    let effect = effect
-                    group.addTask {
+                    guard group.addTaskUnlessCancelled(operation: {
                         await effect.collectActions(emit)
-                    }
+                    }) else { break }
                 }
             }
 
@@ -369,6 +375,7 @@ private actor ActionCollector<Action: Sendable> {
     private var actions: [Action] = []
 
     func append(_ action: Action) {
+        guard !Task.isCancelled else { return }
         actions.append(action)
     }
 
