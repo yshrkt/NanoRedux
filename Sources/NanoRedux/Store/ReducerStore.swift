@@ -21,6 +21,8 @@ public final class ReducerStore<R: Reducer>: Store {
     @ObservationIgnored private var loopTask: Task<Void, Never>?
     #if DEBUG
         @ObservationIgnored private var loggingOptions: LoggingOptions = []
+        @ObservationIgnored private var logName = ""
+        @ObservationIgnored private var formatState: ((State) -> String)?
         @ObservationIgnored private var logOutput: (String) -> Void = { print($0) }
     #endif
 
@@ -42,7 +44,7 @@ public final class ReducerStore<R: Reducer>: Store {
                 // Retain the store only while processing an action, not while waiting for one.
                 guard let self else { return }
                 #if DEBUG
-                    log(action, option: .action, label: "Action")
+                    logAction(action)
                 #endif
                 var nextState = state
                 let effect = self.reducer(
@@ -54,7 +56,7 @@ public final class ReducerStore<R: Reducer>: Store {
                     state = nextState
                 }
                 #if DEBUG
-                    log(state, option: .state, label: "State")
+                    logState()
                 #endif
                 runtime.run(effect) { [weak self] nextAction in
                     self?.continuation?.yield(nextAction)
@@ -67,25 +69,46 @@ public final class ReducerStore<R: Reducer>: Store {
         continuation?.yield(action)
     }
 
-    /// Enables debug logging on this root store and returns the same instance.
+    /// Configures debug logging on this root store and returns the same instance.
+    ///
+    /// State is logged immediately and after every processed action. The default name is
+    /// the state type name. Omit `formatState` to use reflection. Each call replaces the
+    /// previous configuration. Release builds do not format or emit logs.
     @discardableResult
-    public func logging(_ options: LoggingOptions = .all) -> Self {
-        configureLogging(options, output: { print($0) })
+    public func logging(
+        _ options: LoggingOptions = .all,
+        name: String? = nil,
+        formatState: ((State) -> String)? = nil,
+    ) -> Self {
+        configureLogging(options, name: name, formatState: formatState, output: { print($0) })
         return self
     }
 
-    func configureLogging(_ options: LoggingOptions, output: @escaping (String) -> Void) {
+    func configureLogging(
+        _ options: LoggingOptions,
+        name: String? = nil,
+        formatState: ((State) -> String)? = nil,
+        output: @escaping (String) -> Void,
+    ) {
         #if DEBUG
             loggingOptions = options
+            logName = name ?? String(describing: State.self)
+            self.formatState = formatState
             logOutput = output
-            log(state, option: .state, label: "State")
+            logState()
         #endif
     }
 
     #if DEBUG
-        private func log(_ value: Any, option: LoggingOptions, label: String) {
-            guard loggingOptions.contains(option) else { return }
-            logOutput("[\(label)] \(LogFormatter.format(value))")
+        private func logAction(_ action: Action) {
+            guard loggingOptions.contains(.action) else { return }
+            logOutput("[\(logName)][Action] \(LogFormatter.format(action))")
+        }
+
+        private func logState() {
+            guard loggingOptions.contains(.state) else { return }
+            let description = formatState?(state) ?? LogFormatter.format(state)
+            logOutput("[\(logName)][State] \(description)")
         }
     #endif
 

@@ -7,6 +7,38 @@
 - Replaced the concrete `Store` wrapper and internal `Storing` protocol with the public `Store<State, Action>` protocol. Use `StoreBuilder.reducer(...)` to create a root `ReducerStore`, and `any Store<State, Action>` when a shared root/scoped interface is needed. Scoped stores retain the same `state`, `send`, and `scope` API.
 - Logging configuration is available only on root `ReducerStore` instances, before assigning them to `any Store`. Scoped stores do not expose `.logging()`.
 
+### Migration
+
+Replace both `Store.reducer(...)` and `Store<State, Action>.reducer(...)` with `StoreBuilder.reducer(...)`. Contextual `.reducer(...)` calls also need the explicit builder name:
+
+```diff
+- let store = Store.reducer(initialState: AppState(), reducer: AppReducer())
++ let store = StoreBuilder.reducer(initialState: AppState(), reducer: AppReducer())
+```
+
+Change explicit store annotations to the protocol's existential type. Inferred declarations such as `@State private var store = StoreBuilder.reducer(...)` need no additional annotation:
+
+```diff
+- @State private var store: Store<AppState, AppAction>
++ @State private var store: any Store<AppState, AppAction>
+
+- var store: Store<AppState, AppAction>?
++ var store: (any Store<AppState, AppAction>)?
+```
+
+Apply the same annotation change to parameters and return types. Constrain protocol extensions using associated types:
+
+```diff
+- extension Store<AppState, AppAction> {
++ extension Store where State == AppState, Action == AppAction {
+```
+
+Configure `.logging(...)` on the root returned by `StoreBuilder.reducer(...)`, before assigning it to `any Store`. Scoped stores and the shared protocol do not expose logging configuration. Calls to `state`, `send`, and `scope` keep the same syntax.
+
+### Added
+
+- Root store `.logging([.action, .state], name: "App")` with an optional state-formatting closure. Logs include state at configuration time and after each processed action, including effect actions. Debug-only reflection stops at `_$` properties and handles cycles and traversal limits.
+
 ## 0.1.3 - 2026-10-16
 
 ### Breaking Changes

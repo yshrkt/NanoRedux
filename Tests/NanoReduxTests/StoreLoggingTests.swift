@@ -45,12 +45,12 @@ func storeLoggingOptionsAndEffectActions(options: LoggingOptions) async throws {
     try await waitForCount(1, in: state)
 
     #if DEBUG
-        let actions = logs.filter { $0.hasPrefix("[Action]") }
-        let states = logs.filter { $0.hasPrefix("[State]") }
+        let actions = logs.filter { $0.contains("[Action] ") }
+        let states = logs.filter { $0.contains("[State] ") }
         #expect(actions.count == (options.contains(.action) ? 2 : 0))
         #expect(states.count == (options.contains(.state) ? 3 : 0))
         if options.contains(.action) {
-            #expect(actions == ["[Action] start", "[Action] increment"])
+            #expect(actions == ["[LoggedState][Action] start", "[LoggedState][Action] increment"])
         }
         if options.contains(.state) {
             #expect(states[0].contains("_count: 0"))
@@ -58,7 +58,7 @@ func storeLoggingOptionsAndEffectActions(options: LoggingOptions) async throws {
             #expect(states[2].contains("_count: 1"))
         }
         if options == .all {
-            #expect(logs.map { String($0.prefix(8)) } == ["[State] ", "[Action]", "[State] ", "[Action]", "[State] "])
+            #expect(logs.map { $0.contains("[Action]") } == [false, true, false, true, false])
         }
     #else
         #expect(logs.isEmpty)
@@ -103,6 +103,99 @@ func storeLoggingOptionsAndEffectActions(options: LoggingOptions) async throws {
         #expect(logs.isEmpty)
     #endif
     #expect(root.logging([]) === root)
+}
+
+@MainActor
+@Test func customStateLoggingBeforeTypeErasureIncludesEffectResults() async throws {
+    var snapshots: [Int] = []
+    let root = StoreBuilder.reducer(initialState: LoggedState(), reducer: LoggedReducer())
+    let store: any Store<LoggedState, LoggedAction> = root.logging(.state, name: "Counter") { state in
+        snapshots.append(state.count)
+        return "count: \(state.count)"
+    }
+    #expect(store === root)
+    store.send(.start)
+    try await waitForCount(1, in: store.state)
+    #if DEBUG
+        #expect(snapshots == [0, 0, 1])
+    #else
+        #expect(snapshots.isEmpty)
+    #endif
+}
+
+@MainActor
+@Test func loggingNamesDistinguishStoresAndConfigurationCanBeReset() async throws {
+    let first = StoreBuilder.reducer(initialState: LoggedState(), reducer: LoggedReducer())
+    let second = StoreBuilder.reducer(initialState: LoggedState(), reducer: LoggedReducer())
+    var firstLogs: [String] = []
+    var secondLogs: [String] = []
+    first.configureLogging(
+        .all, name: "First", formatState: { "count: \($0.count)" }, output: { firstLogs.append($0) },
+    )
+    second.configureLogging(
+        .all, name: "Second", formatState: { "count: \($0.count)" }, output: { secondLogs.append($0) },
+    )
+    first.send(.increment)
+    second.send(.increment)
+    try await waitForCount(1, in: first.state)
+    try await waitForCount(1, in: second.state)
+    #if DEBUG
+        #expect(firstLogs == ["[First][State] count: 0", "[First][Action] increment", "[First][State] count: 1"])
+        #expect(secondLogs == ["[Second][State] count: 0", "[Second][Action] increment", "[Second][State] count: 1"])
+    #else
+        #expect(firstLogs.isEmpty)
+        #expect(secondLogs.isEmpty)
+    #endif
+
+    first.configureLogging(.state) { firstLogs.append($0) }
+    #if DEBUG
+        #expect(firstLogs.last?.hasPrefix("[LoggedState][State]") == true)
+        #expect(firstLogs.last?.contains("_count: 1") == true)
+    #else
+        #expect(firstLogs.isEmpty)
+    #endif
+}
+
+@MainActor
+@Test(arguments: [LoggingOptions(), .action])
+func customStateFormatterIsNotCalledWhenStateLoggingIsDisabled(options: LoggingOptions) async throws {
+    let store = StoreBuilder.reducer(initialState: LoggedState(), reducer: LoggedReducer())
+        .logging(options, name: "Disabled") { _ in
+            Issue.record("State formatting must be skipped when state logging is disabled")
+            return "unexpected"
+        }
+    store.send(.increment)
+    try await waitForCount(1, in: store.state)
+}
+
+@MainActor
+@Test func customStateFormatterReadsReplacementState() async throws {
+    struct ReplacingReducer: Reducer {
+        func reduce(into state: inout LoggedState, action: Int) -> Effect<Int> {
+            state = LoggedState()
+            state.count = action
+            return .none
+        }
+    }
+    let original = LoggedState()
+    let store = StoreBuilder.reducer(initialState: original, reducer: ReplacingReducer())
+    var logs: [String] = []
+    store.configureLogging(
+        .state, name: "Replacing", formatState: { "count: \($0.count)" }, output: { logs.append($0) },
+    )
+    store.send(5)
+    let clock = ContinuousClock()
+    let deadline = clock.now.advanced(by: .seconds(2))
+    while store.state.count != 5, clock.now < deadline {
+        try await Task.sleep(for: .milliseconds(1))
+    }
+    try #require(store.state.count == 5)
+    #expect(store.state !== original)
+    #if DEBUG
+        #expect(logs == ["[Replacing][State] count: 0", "[Replacing][State] count: 5"])
+    #else
+        #expect(logs.isEmpty)
+    #endif
 }
 
 #if DEBUG

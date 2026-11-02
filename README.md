@@ -34,8 +34,6 @@ Actions use an unbounded buffer to avoid dropping bursts. Keep reducers fast and
 
 `StoreBuilder.reducer(...)` returns a concrete `ReducerStore`. Views can retain either a root or scoped store as `@State private var store: any Store<MyState, MyAction>`. Configure root-only features such as logging before assigning to this shared interface.
 
-Migration: replace `Store.reducer(...)` and `Store<State, Action>.reducer(...)` with `StoreBuilder.reducer(...)`; change explicit `Store<State, Action>` annotations to `any Store<State, Action>`. For optionals use `(any Store<State, Action>)?`. Protocol extensions use `extension Store where State == MyState, Action == MyAction`.
-
 Create a store with a reducer:
 
 ```swift
@@ -68,19 +66,26 @@ Enable console logging with an `OptionSet`. No logging is enabled by default.
 
 ```swift
 let store = StoreBuilder.reducer(
-    initialState: MyFeature.State(),
-    reducer: MyFeature.Reducer()
-).logging([.action, .state])
+    initialState: CounterFeature.State(),
+    reducer: CounterFeature.Reducer()
+).logging([.action, .state], name: "Counter")
 
 store.logging()        // All targets (the default argument is .all)
 store.logging(.action) // Actions only
 store.logging(.state)  // State only
 store.logging([])      // Disable logging
+
+// Format only the state values relevant to this store:
+store.logging(name: "Counter") { state in
+    "count: \(state.count)"
+}
 ```
 
 - `.action` logs each action immediately before the reducer processes it, including effect actions.
 - `.state` logs the current state immediately when configured, then after every processed action, even if unchanged. It does not log direct state mutations outside the reducer.
-- Each call replaces the previous configuration and returns the same store. Configuring `.state` again logs the current state again.
+- `name` labels every log entry. When omitted it defaults to the root state type name, so specify distinct names for multiple stores with the same state type.
+- The optional `formatState` closure receives the current root state and returns its log text. It runs only when `.state` logging is enabled, at configuration time and after each action. It is never called in release builds. Actions keep their automatic formatting.
+- Each call replaces the previous options, name, and formatter and returns the same store. Configuring `.state` again logs the current state again. Omitting `formatState` restores automatic formatting.
 - Logging is available only on `ReducerStore`, before erasing it to `any Store`. Scoped stores do not expose logging configuration. Root logs include mapped actions from all scopes.
 - Logging is active only when NanoRedux is compiled with `DEBUG`; release builds do not format or emit logs.
 
@@ -89,11 +94,11 @@ Values are formatted using `Mirror`, without requiring state types to adopt anot
 Example output:
 
 ```text
-[State] CounterState
+[Counter][State] CounterState
   - _count: 0
   - _$observationRegistrar: ObservationRegistrar (omitted)
-[Action] increment
-[State] CounterState
+[Counter][Action] increment
+[Counter][State] CounterState
   - _count: 1
   - _$observationRegistrar: ObservationRegistrar (omitted)
 ```
