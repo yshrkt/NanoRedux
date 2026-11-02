@@ -58,6 +58,42 @@ let childStore = parentStore.scope(
 )
 ```
 
+#### Debug logging
+
+Enable console logging with an `OptionSet`. No logging is enabled by default.
+
+```swift
+let store = Store.reducer(
+    initialState: MyFeature.State(),
+    reducer: MyFeature.Reducer()
+).logging([.action, .state])
+
+store.logging()        // All targets (the default argument is .all)
+store.logging(.action) // Actions only
+store.logging(.state)  // State only
+store.logging([])      // Disable logging
+```
+
+- `.action` logs each action immediately before the reducer processes it, including effect actions.
+- `.state` logs the current state immediately when configured, then after every processed action, even if unchanged. It does not log direct state mutations outside the reducer.
+- Each call replaces the previous configuration and returns the same store. Configuring `.state` again logs the current state again.
+- Logging on a scoped store configures the shared root store: logs contain the root state and mapped parent actions, including actions from other scopes.
+- Logging is active only when NanoRedux is compiled with `DEBUG`; release builds do not format or emit logs.
+
+Values are formatted using `Mirror`, without requiring state types to adopt another protocol. Properties whose names begin with `_$` (such as Observation's registrar) show only their name and type; their contents are not reflected. Other stored property names, including `_count`, are preserved. Nested values are expanded, with cycle detection and limits of 10 levels, 100 children per value, and 1,000 values per log entry. `_$` is a display convention based on generated property names, not a public Observation guarantee.
+
+Example output:
+
+```text
+[State] CounterState
+  - _count: 0
+  - _$observationRegistrar: ObservationRegistrar (omitted)
+[Action] increment
+[State] CounterState
+  - _count: 1
+  - _$observationRegistrar: ObservationRegistrar (omitted)
+```
+
 ### Reducer
 
 A `Reducer` defines how your app's state changes in response to actions. Implement `reduce(into:action:)`; `callAsFunction(into:action:)` is available as a default convenience.

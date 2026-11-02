@@ -14,4 +14,5 @@ protocol Storing: AnyObject {
 
     var state: State { get }
     func send(_ action: Action)
+    func configureLogging(_ options: LoggingOptions, output: @escaping (String) -> Void)
 }

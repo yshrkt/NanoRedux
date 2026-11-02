@@ -29,6 +29,19 @@ public final class Store<State: Observable, Action: Sendable>: Storing {
         _send(action)
     }
 
+    /// Configures debug logging on the root store and returns this same store.
+    /// State is logged immediately and after every processed action, including effect actions.
+    /// Calling this on a scoped store configures its root store. Release builds do not log.
+    @discardableResult
+    public func logging(_ options: LoggingOptions = .all) -> Store<State, Action> {
+        configureLogging(options, output: { print($0) })
+        return self
+    }
+
+    func configureLogging(_ options: LoggingOptions, output: @escaping (String) -> Void) {
+        core.configureLogging(options, output: output)
+    }
+
     public static func reducer<R: Reducer>(
         initialState: State,
         reducer: R,

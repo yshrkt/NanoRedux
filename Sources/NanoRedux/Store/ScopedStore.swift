@@ -30,4 +30,8 @@ final class ScopedStore<Parent: Storing, LocalState: Observable, LocalAction: Se
     func send(_ action: LocalAction) {
         parent.send(toParentAction(action))
     }
+
+    func configureLogging(_ options: LoggingOptions, output: @escaping (String) -> Void) {
+        parent.configureLogging(options, output: output)
+    }
 }
