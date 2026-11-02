@@ -1,81 +1,25 @@
-//
-//  Store.swift
-//  NanoRedux
-//
-//  Created by Yoshihiro Kato on 2026/02/20.
-//
-
-import Foundation
 import Observation
 
+/// The observable state and action interface shared by root and scoped stores.
 @MainActor
-@Observable
-public final class Store<State: Observable, Action: Sendable>: Storing {
-    private let core: any Storing
-    private let _state: () -> State
-    private let _send: (Action) -> Void
+public protocol Store<State, Action>: AnyObject, Observable {
+    associatedtype State: Observable
+    associatedtype Action: Sendable
 
-    public var state: State {
-        _state()
-    }
+    var state: State { get }
+    func send(_ action: Action)
+}
 
-    private init<Core: Storing>(_ core: Core) where Core.State == State, Core.Action == Action {
-        _state = { core.state }
-        _send = core.send
-        self.core = core
-    }
-
-    public func send(_ action: Action) {
-        _send(action)
-    }
-
-    /// Configures debug logging on the root store and returns this same store.
-    /// State is logged immediately and after every processed action, including effect actions.
-    /// Calling this on a scoped store configures its root store. Release builds do not log.
-    @discardableResult
-    public func logging(_ options: LoggingOptions = .all) -> Store<State, Action> {
-        configureLogging(options, output: { print($0) })
-        return self
-    }
-
-    func configureLogging(_ options: LoggingOptions, output: @escaping (String) -> Void) {
-        core.configureLogging(options, output: output)
-    }
-
-    public static func reducer<R: Reducer>(
-        initialState: State,
-        reducer: R,
-    ) -> Store<State, Action> where R.State == State, R.Action == Action {
-        Store(
-            ReducerStore(
-                initialState: initialState,
-                reducer: reducer,
-            ),
-        )
-    }
-
-    public func scope<ChildState, ChildAction>(
+public extension Store {
+    /// Derives a child store that retains its parent and forwards actions to it.
+    func scope<ChildState: Observable, ChildAction: Sendable>(
         state toChildState: @escaping (State) -> ChildState,
         action toParentAction: @escaping (ChildAction) -> Action,
-    ) -> Store<ChildState, ChildAction> {
-        Store<ChildState, ChildAction>.scope(
+    ) -> some Store<ChildState, ChildAction> {
+        ScopedStore(
             parent: self,
             toLocalState: toChildState,
             toParentAction: toParentAction,
-        )
-    }
-
-    private static func scope<ParentState, ParentAction>(
-        parent: Store<ParentState, ParentAction>,
-        toLocalState: @escaping (ParentState) -> State,
-        toParentAction: @escaping (Action) -> ParentAction,
-    ) -> Store<State, Action> {
-        Store(
-            ScopedStore(
-                parent: parent,
-                toLocalState: toLocalState,
-                toParentAction: toParentAction,
-            ),
         )
     }
 }

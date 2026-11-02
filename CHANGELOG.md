@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Breaking Changes
+
+- Replaced the concrete `Store` wrapper and internal `Storing` protocol with the public `Store<State, Action>` protocol. Use `StoreBuilder.reducer(...)` to create a root `ReducerStore`, and `any Store<State, Action>` when a shared root/scoped interface is needed. Scoped stores retain the same `state`, `send`, and `scope` API.
+- Logging configuration is available only on root `ReducerStore` instances, before assigning them to `any Store`. Scoped stores do not expose `.logging()`.
+
 ## 0.1.3 - 2026-10-16
 
 ### Breaking Changes

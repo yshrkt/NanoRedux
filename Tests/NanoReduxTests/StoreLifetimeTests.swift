@@ -66,7 +66,7 @@ func releasingStoreCancelsManagedStream(lifetime: EffectLifetime) async throws {
     }
     defer { continuation.finish() }
 
-    var store: Store<LifetimeState, LifetimeAction>? = .reducer(
+    var store: (any Store<LifetimeState, LifetimeAction>)? = StoreBuilder.reducer(
         initialState: LifetimeState(),
         reducer: LifetimeReducer(effect: .stream(lifetime: lifetime) { stream }),
     )
@@ -85,7 +85,7 @@ func releasingStoreCancelsManagedStream(lifetime: EffectLifetime) async throws {
 @Test func releasingStoreCancelsStoreBoundRun() async throws {
     let started = Mutex(false)
     let cancelled = Mutex(false)
-    var store: Store<LifetimeState, LifetimeAction>? = .reducer(
+    var store: (any Store<LifetimeState, LifetimeAction>)? = StoreBuilder.reducer(
         initialState: LifetimeState(),
         reducer: LifetimeReducer(effect: .run {
             started.withLock { $0 = true }

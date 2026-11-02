@@ -38,7 +38,7 @@ private struct BufferedReducer: Reducer {
 @MainActor
 private func waitForLastAction(
     _ value: Int,
-    in store: Store<BufferedState, BufferedAction>,
+    in store: any Store<BufferedState, BufferedAction>,
 ) async throws {
     let clock = ContinuousClock()
     let deadline = clock.now.advanced(by: .seconds(2))
@@ -52,7 +52,7 @@ private func waitForLastAction(
 @Test(arguments: [257, 1000])
 func storeProcessesBurstActionsWithoutDroppingOrReordering(actionCount: Int) async throws {
     let values = Array(0 ..< actionCount)
-    let store = Store.reducer(
+    let store = StoreBuilder.reducer(
         initialState: BufferedState(),
         reducer: BufferedReducer(values: []),
     )
@@ -70,7 +70,7 @@ func storeProcessesBurstActionsWithoutDroppingOrReordering(actionCount: Int) asy
 @MainActor
 @Test func storeProcessesStreamActionsWithoutDroppingOrReordering() async throws {
     let values = Array(0 ..< 1000)
-    let store = Store.reducer(
+    let store = StoreBuilder.reducer(
         initialState: BufferedState(),
         reducer: BufferedReducer(values: values),
     )

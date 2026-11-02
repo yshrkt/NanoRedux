@@ -9,15 +9,15 @@ import Observation
 
 @MainActor
 @Observable
-final class ReducerStore<R: Reducer>: Storing {
-    typealias State = R.State
-    typealias Action = R.Action
+public final class ReducerStore<R: Reducer>: Store {
+    public typealias State = R.State
+    public typealias Action = R.Action
 
     private let reducer: R
     private let runtime = EffectRuntime<Action>()
     @ObservationIgnored private var continuation: AsyncStream<Action>.Continuation?
 
-    private(set) var state: State
+    public private(set) var state: State
     @ObservationIgnored private var loopTask: Task<Void, Never>?
     #if DEBUG
         @ObservationIgnored private var loggingOptions: LoggingOptions = []
@@ -63,8 +63,15 @@ final class ReducerStore<R: Reducer>: Storing {
         }
     }
 
-    func send(_ action: Action) {
+    public func send(_ action: Action) {
         continuation?.yield(action)
+    }
+
+    /// Enables debug logging on this root store and returns the same instance.
+    @discardableResult
+    public func logging(_ options: LoggingOptions = .all) -> Self {
+        configureLogging(options, output: { print($0) })
+        return self
     }
 
     func configureLogging(_ options: LoggingOptions, output: @escaping (String) -> Void) {

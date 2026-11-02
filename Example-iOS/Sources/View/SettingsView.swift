@@ -8,9 +8,9 @@ import NanoRedux
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var store: Store<SettingsFeature.State, SettingsFeature.Action>
+    @State private var store: any Store<SettingsFeature.State, SettingsFeature.Action>
 
-    init(store: Store<SettingsFeature.State, SettingsFeature.Action>) {
+    init(store: any Store<SettingsFeature.State, SettingsFeature.Action>) {
         self.store = store
     }
 
@@ -32,7 +32,7 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView(store: .reducer(
+    SettingsView(store: StoreBuilder.reducer(
         initialState: .init(),
         reducer: SettingsFeature.Reducer(),
     ))

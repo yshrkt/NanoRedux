@@ -9,9 +9,9 @@ import NanoRedux
 import SwiftUI
 
 struct EffectDemoView: View {
-    @State private var store: Store<EffectDemoFeature.State, EffectDemoFeature.Action>
+    @State private var store: any Store<EffectDemoFeature.State, EffectDemoFeature.Action>
 
-    init(store: Store<EffectDemoFeature.State, EffectDemoFeature.Action>) {
+    init(store: any Store<EffectDemoFeature.State, EffectDemoFeature.Action>) {
         self.store = store
     }
 
@@ -154,7 +154,7 @@ struct EffectDemoView: View {
 }
 
 #Preview {
-    EffectDemoView(store: .reducer(
+    EffectDemoView(store: StoreBuilder.reducer(
         initialState: .init(),
         reducer: EffectDemoFeature.Reducer(),
     ))

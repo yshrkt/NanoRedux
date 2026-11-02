@@ -60,7 +60,7 @@ private func waitForState(_ condition: () -> Bool) async throws {
 @Test(arguments: [false, true])
 func replacingStateNotifiesObservers(readsProperty: Bool) async throws {
     let original = ObservationFeature.State()
-    let store = Store.reducer(
+    let store: any Store<ObservationFeature.State, ObservationFeature.Action> = StoreBuilder.reducer(
         initialState: original,
         reducer: ObservationFeature.Reducer(),
     )
@@ -87,11 +87,14 @@ func replacingStateNotifiesObservers(readsProperty: Bool) async throws {
 @Test(arguments: [1, 2])
 func replacingParentStateNotifiesScopedObservers(scopeDepth: Int) async throws {
     let original = ObservationFeature.State()
-    let parent = Store.reducer(
+    let parent: any Store<ObservationFeature.State, ObservationFeature.Action> = StoreBuilder.reducer(
         initialState: original,
         reducer: ObservationFeature.Reducer(),
     )
-    var child = parent.scope(state: { $0.child }, action: { $0 })
+    var child: any Store<ObservationFeature.ChildState, ObservationFeature.Action> = parent.scope(
+        state: { $0.child },
+        action: { $0 },
+    )
     for _ in 1 ..< scopeDepth {
         child = child.scope(state: { $0 }, action: { $0 })
     }
@@ -136,7 +139,7 @@ func replacingParentStateNotifiesScopedObservers(scopeDepth: Int) async throws {
             return .none
         }
     }
-    let store = Store.reducer(initialState: ValueState(), reducer: ValueReducer())
+    let store = StoreBuilder.reducer(initialState: ValueState(), reducer: ValueReducer())
     let changes = Mutex(0)
     withObservationTracking {
         _ = store.state.count
@@ -151,7 +154,7 @@ func replacingParentStateNotifiesScopedObservers(scopeDepth: Int) async throws {
 
 @MainActor
 @Test func unrelatedReferenceStateChangesDoNotNotifyObservers() async throws {
-    let store = Store.reducer(
+    let store = StoreBuilder.reducer(
         initialState: ObservationFeature.State(),
         reducer: ObservationFeature.Reducer(),
     )

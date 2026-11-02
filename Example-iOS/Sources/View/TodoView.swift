@@ -8,9 +8,9 @@ import NanoRedux
 import SwiftUI
 
 struct TodoView: View {
-    @State private var store: Store<TodoFeature.State, TodoFeature.Action>
+    @State private var store: any Store<TodoFeature.State, TodoFeature.Action>
 
-    init(store: Store<TodoFeature.State, TodoFeature.Action>) {
+    init(store: any Store<TodoFeature.State, TodoFeature.Action>) {
         self.store = store
     }
 
@@ -87,7 +87,7 @@ struct TodoView: View {
 }
 
 #Preview {
-    TodoView(store: .reducer(
+    TodoView(store: StoreBuilder.reducer(
         initialState: .init(),
         reducer: TodoFeature.Reducer(
             dependencies: TodoFeature.Dependencies(repository: MockTodoRepository()),

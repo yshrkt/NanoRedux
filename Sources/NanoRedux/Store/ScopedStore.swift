@@ -8,7 +8,7 @@
 import Observation
 
 @MainActor
-final class ScopedStore<Parent: Storing, LocalState: Observable, LocalAction: Sendable>: Storing {
+final class ScopedStore<Parent: Store, LocalState: Observable, LocalAction: Sendable>: Store {
     private let parent: Parent
     private let toLocalState: (Parent.State) -> LocalState
     private let toParentAction: (LocalAction) -> Parent.Action
@@ -29,9 +29,5 @@ final class ScopedStore<Parent: Storing, LocalState: Observable, LocalAction: Se
 
     func send(_ action: LocalAction) {
         parent.send(toParentAction(action))
-    }
-
-    func configureLogging(_ options: LoggingOptions, output: @escaping (String) -> Void) {
-        parent.configureLogging(options, output: output)
     }
 }

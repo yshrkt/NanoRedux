@@ -33,7 +33,7 @@ import Testing
         }
     }
 
-    let store = Store<TestState, TestAction>.reducer(
+    let store = StoreBuilder.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
     )
@@ -79,7 +79,7 @@ import Testing
         }
     }
 
-    let store = Store<TestState, TestAction>.reducer(
+    let store = StoreBuilder.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
     )
@@ -119,7 +119,7 @@ import Testing
         }
     }
 
-    let store = Store<TestState, TestAction>.reducer(
+    let store = StoreBuilder.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
     )
@@ -162,7 +162,7 @@ import Testing
         }
     }
 
-    let store = Store<TestState, TestAction>.reducer(
+    let store = StoreBuilder.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
     )
@@ -215,7 +215,7 @@ import Testing
         }
     }
 
-    let store = Store<TestState, TestAction>.reducer(
+    let store = StoreBuilder.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
     )
@@ -265,7 +265,7 @@ import Testing
         }
     }
 
-    let store = Store<TestState, TestAction>.reducer(
+    let store = StoreBuilder.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
     )
@@ -312,7 +312,7 @@ import Testing
         }
     }
 
-    let store = Store<TestState, TestAction>.reducer(
+    let store = StoreBuilder.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
     )
@@ -362,7 +362,7 @@ import Testing
         }
     }
 
-    let store = Store<TestState, TestAction>.reducer(
+    let store = StoreBuilder.reducer(
         initialState: TestState(),
         reducer: TestReducer(),
     )

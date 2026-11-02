@@ -8,9 +8,9 @@ import NanoRedux
 import SwiftUI
 
 struct RootView: View {
-    @State private var store: Store<AppFeature.State, AppFeature.Action>
+    @State private var store: any Store<AppFeature.State, AppFeature.Action>
 
-    init(store: Store<AppFeature.State, AppFeature.Action>) {
+    init(store: any Store<AppFeature.State, AppFeature.Action>) {
         self.store = store
     }
 
@@ -38,22 +38,22 @@ struct RootView: View {
     }
 }
 
-private extension Store<AppFeature.State, AppFeature.Action> {
-    var todoStore: Store<TodoFeature.State, TodoFeature.Action> {
+private extension Store where State == AppFeature.State, Action == AppFeature.Action {
+    var todoStore: any Store<TodoFeature.State, TodoFeature.Action> {
         scope(state: { $0.todo }, action: { .todo($0) })
     }
 
-    var effectsStore: Store<EffectDemoFeature.State, EffectDemoFeature.Action> {
+    var effectsStore: any Store<EffectDemoFeature.State, EffectDemoFeature.Action> {
         scope(state: { $0.effects }, action: { .effects($0) })
     }
 
-    var settingsStore: Store<SettingsFeature.State, SettingsFeature.Action> {
+    var settingsStore: any Store<SettingsFeature.State, SettingsFeature.Action> {
         scope(state: { $0.settings }, action: { .settings($0) })
     }
 }
 
 #Preview {
-    RootView(store: .reducer(
+    RootView(store: StoreBuilder.reducer(
         initialState: .init(),
         reducer: AppFeature.Reducer(
             dependencies: AppFeature.Dependencies(todo: .init(repository: MockTodoRepository())),

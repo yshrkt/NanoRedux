@@ -9,7 +9,7 @@ import SwiftUI
 
 @main
 struct ExampleIOSApp: App {
-    @State private var appStore = Store.reducer(
+    @State private var appStore: any Store<AppFeature.State, AppFeature.Action> = StoreBuilder.reducer(
         initialState: AppFeature.State(),
         reducer: AppFeature.Reducer(dependencies: .init(todo: .init(repository: MockTodoRepository()))),
     )

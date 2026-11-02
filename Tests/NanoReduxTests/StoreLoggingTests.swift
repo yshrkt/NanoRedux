@@ -87,12 +87,12 @@ func storeLoggingOptionsAndEffectActions(options: LoggingOptions) async throws {
 }
 
 @MainActor
-@Test func scopedLoggingUsesRootStateAndMappedActions() async throws {
+@Test func rootLoggingIncludesScopedActions() async throws {
     enum ChildAction: Sendable { case tap }
-    let root = Store.reducer(initialState: LoggedState(), reducer: LoggedReducer())
+    let root = StoreBuilder.reducer(initialState: LoggedState(), reducer: LoggedReducer())
     let child = root.scope(state: { $0 }, action: { (_: ChildAction) in LoggedAction.increment })
     var logs: [String] = []
-    child.configureLogging(.all) { logs.append($0) }
+    root.configureLogging(.all) { logs.append($0) }
     child.send(.tap)
     try await waitForCount(1, in: root.state)
     #if DEBUG
@@ -103,7 +103,6 @@ func storeLoggingOptionsAndEffectActions(options: LoggingOptions) async throws {
         #expect(logs.isEmpty)
     #endif
     #expect(root.logging([]) === root)
-    #expect(child.logging([]) === child)
 }
 
 #if DEBUG
@@ -164,7 +163,7 @@ func storeLoggingOptionsAndEffectActions(options: LoggingOptions) async throws {
                 return .none
             }
         }
-        let store = Store.reducer(initialState: State(), reducer: TestReducer()).logging([])
+        let store = StoreBuilder.reducer(initialState: State(), reducer: TestReducer()).logging([])
         store.send(1)
         let clock = ContinuousClock()
         let deadline = clock.now.advanced(by: .seconds(2))

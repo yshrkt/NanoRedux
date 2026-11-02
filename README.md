@@ -28,20 +28,24 @@ Or add it via Xcode:
 
 ### Store
 
-The `Store` holds your app's state and handles action dispatching. It's `@Observable` and works seamlessly with SwiftUI.
+`Store<State, Action>` is an observable protocol shared by root and scoped stores. `ReducerStore` owns state and handles action dispatching; scoped stores project their parent's state and forward actions.
 
 Actions use an unbounded buffer to avoid dropping bursts. Keep reducers fast and coalesce high-frequency events before dispatching to limit memory growth.
+
+`StoreBuilder.reducer(...)` returns a concrete `ReducerStore`. Views can retain either a root or scoped store as `@State private var store: any Store<MyState, MyAction>`. Configure root-only features such as logging before assigning to this shared interface.
+
+Migration: replace `Store.reducer(...)` and `Store<State, Action>.reducer(...)` with `StoreBuilder.reducer(...)`; change explicit `Store<State, Action>` annotations to `any Store<State, Action>`. For optionals use `(any Store<State, Action>)?`. Protocol extensions use `extension Store where State == MyState, Action == MyAction`.
 
 Create a store with a reducer:
 
 ```swift
-let store = Store.reducer(
+let store = StoreBuilder.reducer(
     initialState: MyFeature.State(),
     reducer: MyFeature.Reducer()
 )
 
 // If your reducer conforms to InjectableReducer:
-let injectedStore = Store.reducer(
+let injectedStore = StoreBuilder.reducer(
     initialState: MyFeature.State(),
     reducer: MyFeature.Reducer(dependencies: MyFeature.Dependencies())
 )
@@ -63,7 +67,7 @@ let childStore = parentStore.scope(
 Enable console logging with an `OptionSet`. No logging is enabled by default.
 
 ```swift
-let store = Store.reducer(
+let store = StoreBuilder.reducer(
     initialState: MyFeature.State(),
     reducer: MyFeature.Reducer()
 ).logging([.action, .state])
@@ -77,7 +81,7 @@ store.logging([])      // Disable logging
 - `.action` logs each action immediately before the reducer processes it, including effect actions.
 - `.state` logs the current state immediately when configured, then after every processed action, even if unchanged. It does not log direct state mutations outside the reducer.
 - Each call replaces the previous configuration and returns the same store. Configuring `.state` again logs the current state again.
-- Logging on a scoped store configures the shared root store: logs contain the root state and mapped parent actions, including actions from other scopes.
+- Logging is available only on `ReducerStore`, before erasing it to `any Store`. Scoped stores do not expose logging configuration. Root logs include mapped actions from all scopes.
 - Logging is active only when NanoRedux is compiled with `DEBUG`; release builds do not format or emit logs.
 
 Values are formatted using `Mirror`, without requiring state types to adopt another protocol. Properties whose names begin with `_$` (such as Observation's registrar) show only their name and type; their contents are not reflected. Other stored property names, including `_count`, are preserved. Nested values are expanded, with cycle detection and limits of 10 levels, 100 children per value, and 1,000 values per log entry. `_$` is a display convention based on generated property names, not a public Observation guarantee.
@@ -270,7 +274,7 @@ enum CounterFeature {
 
 ```swift
 struct CounterView: View {
-    @State var store: Store<CounterFeature.State, CounterFeature.Action>
+    @State var store: any Store<CounterFeature.State, CounterFeature.Action>
 
     var body: some View {
         VStack {

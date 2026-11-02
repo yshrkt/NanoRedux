@@ -26,7 +26,7 @@ import Testing
         }
     }
 
-    let parentStore = Store<ParentState, ParentAction>.reducer(
+    let parentStore = StoreBuilder.reducer(
         initialState: ParentState(),
         reducer: ParentReducer(),
     )
@@ -67,7 +67,7 @@ import Testing
         case increment
     }
 
-    let parentStore = Store<ParentState, ParentAction>.reducer(
+    let parentStore = StoreBuilder.reducer(
         initialState: ParentState(),
         reducer: ParentReducer(),
     )
